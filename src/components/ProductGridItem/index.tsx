@@ -35,24 +35,24 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
   return (
     <Link className="relative inline-block h-full w-full group" href={`/products/${product.slug}`}>
       {image ? (
-        <Media
-          className={clsx(
-            'relative aspect-square object-cover border rounded-2xl p-8 bg-primary-foreground',
-          )}
-          height={80}
-          imgClassName={clsx('h-full w-full object-cover rounded-2xl', {
-            'transition duration-300 ease-in-out group-hover:scale-102': true,
-          })}
-          resource={image}
-          width={80}
-        />
+        <div className="relative overflow-hidden aspect-square border border-honeycomb-cream/30 rounded-2xl p-8 bg-honeycomb-light/30">
+          <Media
+            className={clsx(
+              'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105',
+            )}
+            height={80}
+            imgClassName={clsx('h-full w-full object-cover rounded-2xl')}
+            resource={image}
+            width={80}
+          />
+        </div>
       ) : null}
 
-      <div className="font-mono text-primary/50 group-hover:text-primary flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-4 font-semibold text-honeycomb-charcoal group-hover:text-honeycomb-slate transition-colors text-sm">
         <div>{title}</div>
 
         {typeof price === 'number' && (
-          <div className="">
+          <div className="text-honeycomb-charcoal">
             <Price amount={price} />
           </div>
         )}

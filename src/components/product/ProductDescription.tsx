@@ -2,13 +2,13 @@
 import type { Product, Variant } from '@/payload-types'
 
 import { RichText } from '@/components/RichText'
-import { AddToCart } from '@/components/Cart/AddToCart'
 import { Price } from '@/components/Price'
 import React, { Suspense } from 'react'
+import { Button } from '@/components/ui/button'
+import { ShoppingBag } from 'lucide-react'
 
 import { VariantSelector } from './VariantSelector'
 import { useCurrency } from '@payloadcms/plugin-ecommerce/client/react'
-import { StockIndicator } from '@/components/product/StockIndicator'
 
 export function ProductDescription({ product }: { product: Product }) {
   const { currency } = useCurrency()
@@ -76,17 +76,28 @@ export function ProductDescription({ product }: { product: Product }) {
           <hr />
         </>
       )}
-      <div className="flex items-center justify-between">
-        <Suspense fallback={null}>
-          <StockIndicator product={product} />
-        </Suspense>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <Suspense fallback={null}>
-          <AddToCart product={product} />
-        </Suspense>
-      </div>
+      {product.externalLinks && product.externalLinks.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {product.externalLinks.map((link, idx) => (
+            <Button
+              key={idx}
+              asChild
+              variant={idx === 0 ? 'honey' : 'secondary'}
+              size="xl"
+              className="w-full text-center hover:cursor-pointer flex items-center justify-center gap-2"
+            >
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                <ShoppingBag className="w-5 h-5" />
+                {link.label || 'Buy Now'}
+              </a>
+            </Button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center py-4 px-6 border-2 border-red-500/20 bg-red-500/5 text-red-600 rounded-full text-base font-bold select-none uppercase tracking-wider">
+          Out of Stock
+        </div>
+      )}
     </div>
   )
 }

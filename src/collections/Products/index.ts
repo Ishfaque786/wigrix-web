@@ -165,6 +165,25 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               hasMany: true,
               relationTo: 'products',
             },
+            {
+              name: 'externalLinks',
+              type: 'array',
+              label: 'External Purchase Links',
+              fields: [
+                {
+                  name: 'label',
+                  type: 'text',
+                  required: true,
+                  label: 'Button Label (e.g., Buy on Amazon)',
+                },
+                {
+                  name: 'url',
+                  type: 'text',
+                  required: true,
+                  label: 'Product URL',
+                },
+              ],
+            },
           ],
           label: 'Product Details',
         },

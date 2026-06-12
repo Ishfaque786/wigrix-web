@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
       {
         pathname: '/api/media/file/**',
       },
+      {
+        pathname: '/media/**',
+      },
+      {
+        pathname: '/images/**',
+      },
     ],
     qualities: [90, 100],
     remotePatterns: [
