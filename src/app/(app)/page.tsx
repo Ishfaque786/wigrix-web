@@ -19,11 +19,12 @@ export const metadata: Metadata = {
 
 // Trust badges
 const trustBadges = [
-  { icon: Truck, label: 'Free Shipping', desc: 'Orders $99+' },
+  { icon: Truck, label: 'Free Shipping', desc: 'Orders ₹999+' },
   { icon: Shield, label: 'Premium Quality', desc: 'Built to last' },
   { icon: Package, label: 'Easy Returns', desc: '30-day policy' },
   { icon: Clock, label: 'Fast Delivery', desc: '2-4 days' },
 ]
+
 
 // Featured Collections - Updated with local image paths
 const featuredCollections = [
@@ -139,12 +140,14 @@ export default async function Home() {
   // Format spotlight price
   const spotlightPrice =
     spinningOrganizer && typeof spinningOrganizer.priceInUSD === 'number'
-      ? new Intl.NumberFormat('en-US', {
+      ? new Intl.NumberFormat('en-IN', {
           style: 'currency',
-          currency: 'USD',
+          currency: 'INR',
           minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         }).format(spinningOrganizer.priceInUSD)
-      : '$19'
+      : '₹949'
+
 
   return (
     <main className="overflow-hidden bg-white">

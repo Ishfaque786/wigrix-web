@@ -11,10 +11,6 @@ type Props = {
   style?: 'compact' | 'default'
   variant?: Variant
   quantity?: number
-  /**
-   * Force all formatting to a particular currency.
-   */
-  currencyCode?: string
 }
 
 export const ProductItem: React.FC<Props> = ({
@@ -22,7 +18,6 @@ export const ProductItem: React.FC<Props> = ({
   style = 'default',
   quantity,
   variant,
-  currencyCode,
 }) => {
   const { title } = product
 
@@ -94,7 +89,6 @@ export const ProductItem: React.FC<Props> = ({
             <Price
               className="font-mono text-primary/50 text-sm"
               amount={itemPrice * quantity}
-              currencyCode={currencyCode}
             />
           </div>
         )}

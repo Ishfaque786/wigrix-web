@@ -5,57 +5,65 @@ import { RichText } from '@/components/RichText'
 import { Price } from '@/components/Price'
 import React, { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, Star, Shield, Truck, Package } from 'lucide-react'
 
 import { VariantSelector } from './VariantSelector'
-import { useCurrency } from '@payloadcms/plugin-ecommerce/client/react'
 
 export function ProductDescription({ product }: { product: Product }) {
-  const { currency } = useCurrency()
   let amount = 0,
     lowestAmount = 0,
     highestAmount = 0
-  const priceField = `priceIn${currency.code}` as keyof Product
   const hasVariants = product.enableVariants && Boolean(product.variants?.docs?.length)
 
   if (hasVariants) {
-    const priceField = `priceIn${currency.code}` as keyof Variant
     const variantsOrderedByPrice = product.variants?.docs
       ?.filter((variant) => variant && typeof variant === 'object')
       .sort((a, b) => {
         if (
           typeof a === 'object' &&
           typeof b === 'object' &&
-          priceField in a &&
-          priceField in b &&
-          typeof a[priceField] === 'number' &&
-          typeof b[priceField] === 'number'
+          'priceInUSD' in a &&
+          'priceInUSD' in b &&
+          typeof a.priceInUSD === 'number' &&
+          typeof b.priceInUSD === 'number'
         ) {
-          return a[priceField] - b[priceField]
+          return a.priceInUSD - b.priceInUSD
         }
-
         return 0
       }) as Variant[]
 
-    const lowestVariant = variantsOrderedByPrice[0][priceField]
-    const highestVariant = variantsOrderedByPrice[variantsOrderedByPrice.length - 1][priceField]
-    if (
-      variantsOrderedByPrice &&
-      typeof lowestVariant === 'number' &&
-      typeof highestVariant === 'number'
-    ) {
-      lowestAmount = lowestVariant
-      highestAmount = highestVariant
+    if (variantsOrderedByPrice?.length) {
+      const lowestVariant = variantsOrderedByPrice[0]?.priceInUSD
+      const highestVariant = variantsOrderedByPrice[variantsOrderedByPrice.length - 1]?.priceInUSD
+      if (typeof lowestVariant === 'number' && typeof highestVariant === 'number') {
+        lowestAmount = lowestVariant
+        highestAmount = highestVariant
+      }
     }
-  } else if (product[priceField] && typeof product[priceField] === 'number') {
-    amount = product[priceField]
+  } else if (product.priceInUSD && typeof product.priceInUSD === 'number') {
+    amount = product.priceInUSD
   }
+
+  const trustBadges = [
+    { icon: Truck, label: 'Free Shipping', desc: 'On all orders' },
+    { icon: Package, label: 'Easy Returns', desc: '30-day policy' },
+    { icon: Shield, label: 'Secure Payment', desc: '100% protected' },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-2xl font-medium">{product.title}</h1>
-        <div className="uppercase font-mono">
+      {/* Title & Price */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold text-honeycomb-charcoal tracking-tight">{product.title}</h1>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            {[1,2,3,4,5].map((i) => (
+              <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+            ))}
+          </div>
+          <span className="text-sm text-honeycomb-muted">(4.9 · 128 reviews)</span>
+        </div>
+        <div className="text-3xl font-bold text-honeycomb-charcoal mt-1">
           {hasVariants ? (
             <Price highestAmount={highestAmount} lowestAmount={lowestAmount} />
           ) : (
@@ -63,41 +71,60 @@ export function ProductDescription({ product }: { product: Product }) {
           )}
         </div>
       </div>
+
+      {/* Description */}
       {product.description ? (
-        <RichText className="" data={product.description} enableGutter={false} />
+        <RichText className="text-honeycomb-medium leading-relaxed" data={product.description} enableGutter={false} />
       ) : null}
-      <hr />
+
+      <hr className="border-honeycomb-cream/30" />
+
+      {/* Variant Selector */}
       {hasVariants && (
         <>
           <Suspense fallback={null}>
             <VariantSelector product={product} />
           </Suspense>
-
-          <hr />
+          <hr className="border-honeycomb-cream/30" />
         </>
       )}
+
+      {/* External Purchase Links / Out of Stock */}
       {product.externalLinks && product.externalLinks.length > 0 ? (
         <div className="flex flex-col gap-3">
           {product.externalLinks.map((link, idx) => (
-            <Button
+            <a
               key={idx}
-              asChild
-              variant={idx === 0 ? 'honey' : 'secondary'}
-              size="xl"
-              className="w-full text-center hover:cursor-pointer flex items-center justify-center gap-2"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-center gap-2 w-full px-6 py-4 rounded-full font-bold text-base transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:cursor-pointer ${
+                idx === 0
+                  ? 'bg-honeycomb-charcoal text-white hover:bg-honeycomb-slate shadow-lg shadow-honeycomb-charcoal/20 hover:shadow-xl'
+                  : 'border-2 border-honeycomb-charcoal/30 text-honeycomb-charcoal hover:bg-honeycomb-light'
+              }`}
             >
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                <ShoppingBag className="w-5 h-5" />
-                {link.label || 'Buy Now'}
-              </a>
-            </Button>
+              <ShoppingBag className="w-5 h-5" />
+              {link.label || 'Buy Now'}
+            </a>
           ))}
         </div>
       ) : (
-        <div className="flex items-center justify-center py-4 px-6 border-2 border-red-500/20 bg-red-500/5 text-red-600 rounded-full text-base font-bold select-none uppercase tracking-wider">
+        <div className="flex items-center justify-center py-4 px-6 border-2 border-red-400/30 bg-red-50 text-red-600 rounded-full text-base font-bold select-none uppercase tracking-wider">
           Out of Stock
         </div>
       )}
+
+      {/* Trust Badges */}
+      <div className="grid grid-cols-3 gap-3 pt-2">
+        {trustBadges.map((badge, idx) => (
+          <div key={idx} className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-honeycomb-light/50 border border-honeycomb-cream/20 text-center">
+            <badge.icon className="w-5 h-5 text-honeycomb-charcoal" strokeWidth={1.5} />
+            <span className="text-xs font-bold text-honeycomb-charcoal">{badge.label}</span>
+            <span className="text-xs text-honeycomb-muted">{badge.desc}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

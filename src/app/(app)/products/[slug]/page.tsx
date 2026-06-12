@@ -1,17 +1,16 @@
 import type { Media, Product } from '@/payload-types'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
-import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import React, { Suspense } from 'react'
-import { Button } from '@/components/ui/button'
-import { ChevronLeftIcon } from 'lucide-react'
+import { ChevronRight, Star, Package, Truck, Shield, ArrowLeft } from 'lucide-react'
 import { Metadata } from 'next'
 
 type Args = {
@@ -27,10 +26,8 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   if (!product) return notFound()
 
   const gallery = product.gallery?.filter((item) => typeof item.image === 'object') || []
-
   const metaImage = typeof product.meta?.image === 'object' ? product.meta?.image : undefined
   const canIndex = product._status === 'published'
-
   const seoImage = metaImage || (gallery.length ? (gallery[0]?.image as Media) : undefined)
 
   return {
@@ -49,10 +46,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
       : null,
     robots: {
       follow: canIndex,
-      googleBot: {
-        follow: canIndex,
-        index: canIndex,
-      },
+      googleBot: { follow: canIndex, index: canIndex },
       index: canIndex,
     },
     title: product.meta?.title || product.title,
@@ -73,7 +67,6 @@ export default async function ProductPage({ params }: Args) {
         image: item.image as Media,
       })) || []
 
-  const metaImage = typeof product.meta?.image === 'object' ? product.meta?.image : undefined
   const hasStock = product.enableVariants
     ? product?.variants?.docs?.some((variant) => {
         if (typeof variant !== 'object') return false
@@ -82,7 +75,6 @@ export default async function ProductPage({ params }: Args) {
     : product.inventory! > 0
 
   let price = product.priceInUSD
-
   if (product.enableVariants && product?.variants?.docs?.length) {
     price = product?.variants?.docs?.reduce((acc, variant) => {
       if (typeof variant === 'object' && variant?.priceInUSD && acc && variant?.priceInUSD > acc) {
@@ -92,17 +84,28 @@ export default async function ProductPage({ params }: Args) {
     }, price)
   }
 
+  // Get category info for breadcrumbs
+  const categoryName =
+    product.categories && Array.isArray(product.categories) && product.categories.length > 0
+      ? (product.categories[0] as any)?.title || 'Products'
+      : 'Products'
+
+  const categorySlug =
+    product.categories && Array.isArray(product.categories) && product.categories.length > 0
+      ? (product.categories[0] as any)?.slug || ''
+      : ''
+
   const productJsonLd = {
     name: product.title,
     '@context': 'https://schema.org',
     '@type': 'Product',
     description: product.description,
-    image: metaImage?.url,
+    image: (gallery[0]?.image as Media)?.url,
     offers: {
       '@type': 'AggregateOffer',
       availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       price: price,
-      priceCurrency: 'usd',
+      priceCurrency: 'INR',
     },
   }
 
@@ -112,44 +115,68 @@ export default async function ProductPage({ params }: Args) {
   return (
     <React.Fragment>
       <script
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productJsonLd),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
         type="application/ld+json"
       />
-      <div className="container pt-8 pb-8">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link href="/shop">
-            <ChevronLeftIcon />
-            All products
-          </Link>
-        </Button>
-        <div className="flex flex-col gap-12 rounded-lg border p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary-foreground">
-          <div className="h-full w-full basis-full lg:basis-1/2">
-            <Suspense
-              fallback={
-                <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
-              }
-            >
-              {Boolean(gallery?.length) && <Gallery gallery={gallery} />}
-            </Suspense>
-          </div>
 
-          <div className="basis-full lg:basis-1/2">
-            <ProductDescription product={product} />
+      <main className="min-h-screen bg-honeycomb-warm">
+        {/* Breadcrumbs */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-24 pb-4">
+          <nav className="flex items-center gap-2 text-sm text-honeycomb-muted" aria-label="Breadcrumb">
+            <Link href="/" className="hover:text-honeycomb-charcoal transition-colors">
+              Home
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <Link href="/shop" className="hover:text-honeycomb-charcoal transition-colors">
+              Shop
+            </Link>
+            {categoryName && categoryName !== 'Products' && (
+              <>
+                <ChevronRight className="w-4 h-4" />
+                <Link
+                  href={`/shop?category=${categorySlug}`}
+                  className="hover:text-honeycomb-charcoal transition-colors"
+                >
+                  {categoryName}
+                </Link>
+              </>
+            )}
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-honeycomb-charcoal font-medium line-clamp-1">{product.title}</span>
+          </nav>
+        </div>
+
+        {/* Product Content */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 pb-16">
+          <div className="flex flex-col gap-12 rounded-3xl border border-honeycomb-cream/30 p-6 md:p-10 lg:flex-row lg:gap-10 bg-white shadow-sm">
+            {/* Gallery */}
+            <div className="h-full w-full basis-full lg:basis-1/2">
+              <Suspense
+                fallback={
+                  <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden bg-honeycomb-light/30 rounded-2xl animate-pulse" />
+                }
+              >
+                {Boolean(gallery?.length) && <Gallery gallery={gallery} />}
+              </Suspense>
+            </div>
+
+            {/* Description */}
+            <div className="basis-full lg:basis-1/2">
+              <ProductDescription product={product} />
+            </div>
           </div>
         </div>
-      </div>
 
-      {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>}
+        {/* Content Blocks */}
+        {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>}
 
-      {relatedProducts.length ? (
-        <div className="container">
-          <RelatedProducts products={relatedProducts as Product[]} />
-        </div>
-      ) : (
-        <></>
-      )}
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="max-w-7xl mx-auto px-6 lg:px-10 pb-20">
+            <RelatedProducts products={relatedProducts as Product[]} />
+          </div>
+        )}
+      </main>
     </React.Fragment>
   )
 }
@@ -159,25 +186,59 @@ function RelatedProducts({ products }: { products: Product[] }) {
 
   return (
     <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
-      <ul className="flex w-full gap-4 overflow-x-auto pt-1">
-        {products.map((product) => (
-          <li
-            className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5"
-            key={product.id}
-          >
-            <Link className="relative h-full w-full" href={`/products/${product.slug}`}>
-              <GridTileImage
-                label={{
-                  amount: product.priceInUSD!,
-                  title: product.title,
-                }}
-                media={product.meta?.image as Media}
-              />
+      <div className="flex items-center gap-3 mb-8">
+        <span className="w-10 h-[3px] bg-honeycomb-cream rounded-full" />
+        <h2 className="text-2xl font-bold text-honeycomb-charcoal">You May Also Like</h2>
+        <span className="w-10 h-[3px] bg-honeycomb-cream rounded-full" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {products.map((product) => {
+          const gallery = product.gallery?.filter((img) => typeof img.image === 'object') || []
+          const firstImage = gallery[0]?.image as Media
+          const thumbnailUrl = firstImage?.url || null
+          const priceFormatted =
+            typeof product.priceInUSD === 'number'
+              ? new Intl.NumberFormat('en-IN', {
+                  style: 'currency',
+                  currency: 'INR',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(product.priceInUSD)
+              : null
+
+          return (
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-honeycomb-cream/30 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="relative aspect-square bg-honeycomb-light/40 overflow-hidden">
+                {thumbnailUrl ? (
+                  <Image
+                    src={thumbnailUrl}
+                    alt={product.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-honeycomb-muted text-xs">
+                    No Image
+                  </div>
+                )}
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-semibold text-honeycomb-charcoal line-clamp-1 group-hover:text-honeycomb-slate transition-colors">
+                  {product.title}
+                </p>
+                {priceFormatted && (
+                  <p className="text-sm font-bold text-honeycomb-charcoal mt-0.5">{priceFormatted}</p>
+                )}
+              </div>
             </Link>
-          </li>
-        ))}
-      </ul>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -196,11 +257,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
     pagination: false,
     where: {
       and: [
-        {
-          slug: {
-            equals: slug,
-          },
-        },
+        { slug: { equals: slug } },
         ...(draft ? [] : [{ _status: { equals: 'published' } }]),
       ],
     },

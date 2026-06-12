@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Heart, Star, Clock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart, Star, Clock, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Product, Media } from '@/payload-types'
-import { Button } from '@/components/ui/button'
 
 type ProductsCollectionTabsProps = {
   products: Product[]
@@ -18,17 +17,19 @@ const tabs = [
   { id: 'featured', label: 'Featured Products' },
 ]
 
+function formatINR(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 function getProductPrice(product: Product) {
   const amount = product.priceInUSD
   if (typeof amount !== 'number') return null
-  return {
-    formatted: new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(amount),
-    amount,
-  }
+  return { formatted: formatINR(amount), amount }
 }
 
 export default function ProductsCollectionTabs({ products }: ProductsCollectionTabsProps) {
@@ -37,7 +38,6 @@ export default function ProductsCollectionTabs({ products }: ProductsCollectionT
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
 
-  // Filter products based on active tab
   const getFilteredProducts = () => {
     switch (activeTab) {
       case 'latest':
@@ -72,9 +72,8 @@ export default function ProductsCollectionTabs({ products }: ProductsCollectionT
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 320 // Approximate card width + gap
       scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        left: direction === 'left' ? -320 : 320,
         behavior: 'smooth',
       })
     }
@@ -110,7 +109,6 @@ export default function ProductsCollectionTabs({ products }: ProductsCollectionT
             <ChevronLeft className="w-5 h-5 text-honeycomb-charcoal" />
           </button>
         )}
-
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
@@ -123,7 +121,7 @@ export default function ProductsCollectionTabs({ products }: ProductsCollectionT
         {/* Scrollable Products Container */}
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto scrollbar-hide overflow-y-visible p-6 snap-x snap-mandatory no-scrollbar"
+          className="flex gap-6 overflow-x-auto overflow-y-visible p-6 snap-x snap-mandatory no-scrollbar"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {filteredProducts.map((product, index) => (
@@ -142,13 +140,23 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
   const price = getProductPrice(product)
   const galleryImages = product?.gallery?.filter((img) => typeof img.image === 'object') || []
   const firstImage = galleryImages[0]?.image as Media
-  const thumbnailUrl = firstImage?.url || (typeof product.meta?.image === 'object' ? product.meta?.image?.url : undefined)
+  const thumbnailUrl =
+    firstImage?.url ||
+    (typeof product.meta?.image === 'object' ? product.meta?.image?.url : undefined)
 
-  // Generate rating
-  const rating = (4 + ((product.id?.charCodeAt(0) || 0) % 10) / 10).toFixed(1)
+  const categoryName =
+    product.categories && Array.isArray(product.categories) && product.categories.length > 0
+      ? (product.categories[0] as any)?.title || 'Accessory'
+      : 'Accessory'
 
-  // Show countdown for first product (demo)
+  // Deterministic rating
+  const rating = (4.5 + ((product.title?.charCodeAt(0) || 0) % 5) / 10).toFixed(1)
+
+  // Show countdown for first product
   const showCountdown = index === 0
+
+  const firstExternalLink =
+    product.externalLinks && product.externalLinks.length > 0 ? product.externalLinks[0] : null
 
   return (
     <div
@@ -156,9 +164,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative bg-white rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-lg hover:-translate-y-2 border border-honeycomb-cream/30">
-        {/* Image Container */}
-        <div className="relative aspect-square w-full bg-honeycomb-light overflow-hidden">
+      <div className="relative bg-white rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-lg hover:-translate-y-2 border border-honeycomb-cream/30 flex flex-col h-full">
+        {/* Image Container — links to detail */}
+        <Link href={`/products/${product.slug}`} className="block relative aspect-square w-full bg-honeycomb-light overflow-hidden">
           {thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
@@ -187,7 +195,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             />
           </button>
 
-          {/* Countdown Timer (for first product) */}
+          {/* Countdown Timer (first product demo) */}
           {showCountdown && (
             <div className="absolute bottom-3 left-3 right-3 z-20">
               <div className="flex items-center gap-1 bg-honeycomb-charcoal/90 backdrop-blur-sm rounded-xl px-3 py-2 text-white">
@@ -195,9 +203,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                 <div className="flex gap-1">
                   {[
                     { value: '05', label: 'Days' },
-                    { value: '12', label: 'Hours' },
-                    { value: '30', label: 'Mins' },
-                    { value: '25', label: 'Secs' },
+                    { value: '12', label: 'Hrs' },
+                    { value: '30', label: 'Min' },
+                    { value: '25', label: 'Sec' },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center">
                       <div className="bg-white/20 rounded px-1.5 py-0.5 text-xs font-bold">
@@ -210,30 +218,28 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               </div>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 flex flex-col gap-2 flex-1">
           {/* Category & Rating */}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-honeycomb-muted font-medium">
-              {product.categories && product.categories.length > 0
-                ? (product.categories[0] as any)?.title || 'Accessory'
-                : 'Accessory'}
-            </span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-honeycomb-muted font-medium">{categoryName}</span>
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-medium text-honeycomb-charcoal">{rating}</span>
+              <span className="text-xs font-semibold text-honeycomb-charcoal">{rating}</span>
             </div>
           </div>
 
           {/* Title */}
-          <h3 className="font-semibold text-honeycomb-charcoal text-sm leading-snug line-clamp-2 mb-3 group-hover:text-honeycomb-slate transition-colors">
-            {product.title}
-          </h3>
+          <Link href={`/products/${product.slug}`}>
+            <h3 className="font-semibold text-honeycomb-charcoal text-sm leading-snug line-clamp-2 hover:text-honeycomb-slate transition-colors">
+              {product.title}
+            </h3>
+          </Link>
 
           {/* Price */}
-          <div className="flex items-baseline gap-2 mb-3">
+          <div className="flex items-baseline gap-2 mt-auto pt-1">
             {price ? (
               <span className="font-bold text-honeycomb-charcoal text-lg">{price.formatted}</span>
             ) : (
@@ -241,16 +247,25 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             )}
           </div>
 
-          {/* View Details Button */}
-          <Link href={`/products/${product.slug}`} className="block w-full">
-            <Button
-              variant="honey"
-              size="sm"
-              className="w-full rounded-xl py-2 text-xs font-semibold hover:cursor-pointer"
+          {/* Direct Buy Button or Out of Stock */}
+          {firstExternalLink ? (
+            <a
+              href={firstExternalLink.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-honeycomb-charcoal text-white text-xs font-bold hover:bg-honeycomb-slate transition-all duration-200 hover:shadow-md hover:cursor-pointer"
             >
-              View Details
-            </Button>
-          </Link>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              {firstExternalLink.label || 'Buy Now'}
+            </a>
+          ) : (
+            <Link href={`/products/${product.slug}`} className="mt-1 block">
+              <div className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-honeycomb-charcoal/30 text-honeycomb-charcoal text-xs font-bold hover:bg-honeycomb-light transition-colors hover:cursor-pointer">
+                View Details
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>
