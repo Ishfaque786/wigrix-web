@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@payloadcms/admin-bar": "3.85.1",
+    "@payloadcms/db-mongodb": "3.85.1",
     "@payloadcms/email-nodemailer": "3.85.1",
     "@payloadcms/live-preview-react": "3.85.1",
     "@payloadcms/next": "3.85.1",
@@ -36,6 +37,7 @@
     "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-menubar": "^1.1.17",
     "@radix-ui/react-select": "^2.1.6",
     "@radix-ui/react-slot": "^1.1.2",
     "@stripe/react-stripe-js": "^3",
@@ -62,8 +64,7 @@
     "sharp": "0.34.2",
     "sonner": "^1.7.2",
     "stripe": "18.5.0",
-    "tailwind-merge": "^3.4.0",
-    "@payloadcms/db-mongodb": "3.85.1"
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

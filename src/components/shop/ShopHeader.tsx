@@ -1,9 +1,17 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useCallback, useRef, Suspense, useState } from 'react'
-import { Search, X, SlidersHorizontal, ChevronDown, Check } from 'lucide-react'
+import { useCallback, useEffect, useState, Suspense } from 'react'
+import { Search, X, SlidersHorizontal, ChevronDown, ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
+import {
+  Menubar,
+  MenubarContent,
+  MenubarMenu,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarTrigger,
+} from '@/components/ui/menubar'
 
 // ── Categories ─────────────────────────────────────────────────────────────
 const categoryLinks = [
@@ -34,8 +42,7 @@ function ShopHeaderInner({ activeCategory, searchQuery, activeSort }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [sortOpen, setSortOpen] = useState(false)
+  const [inputValue, setInputValue] = useState(searchQuery)
 
   // Build query string preserving all existing params
   const createQS = useCallback(
@@ -50,15 +57,40 @@ function ShopHeaderInner({ activeCategory, searchQuery, activeSort }: Props) {
     [searchParams],
   )
 
-  const navigate = (updates: Record<string, string | null>) => {
-    const qs = createQS(updates)
-    router.push(`${pathname}${qs ? `?${qs}` : ''}`)
-  }
+  const navigate = useCallback(
+    (updates: Record<string, string | null>) => {
+      const qs = createQS(updates)
+      router.push(`${pathname}${qs ? `?${qs}` : ''}`)
+    },
+    [createQS, pathname, router],
+  )
 
-  // Search submit
+  // Sync state with prop (e.g. if query cleared from elsewhere or via back button)
+  useEffect(() => {
+    setInputValue(searchQuery)
+  }, [searchQuery])
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputValue.trim() !== searchQuery) {
+        navigate({ q: inputValue.trim() || null })
+      }
+    }, 350)
+
+    return () => clearTimeout(timer)
+  }, [inputValue, searchQuery, navigate])
+
+  // Search submit (instant search on Enter key)
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    navigate({ q: inputRef.current?.value.trim() || null })
+    navigate({ q: inputValue.trim() || null })
+  }
+
+  // Instant clear
+  const handleClear = () => {
+    setInputValue('')
+    navigate({ q: null })
   }
 
   // Category href — keeps search + sort
@@ -83,124 +115,97 @@ function ShopHeaderInner({ activeCategory, searchQuery, activeSort }: Props) {
       />
       <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-honeycomb-cream/15 rounded-full blur-[90px] translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-6 lg:px-10 pt-28 pb-6 lg:pt-32 lg:pb-8">
-        {/* ── Row 1: Title + Search ─────────────────────────────────────── */}
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
-          <div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-honeycomb-charcoal tracking-tight leading-none">
-              Shop All
-            </h1>
-            <p className="text-honeycomb-medium mt-2 text-sm lg:text-base">
-              Premium workspace accessories, handcrafted for you.
-            </p>
+      <div className="relative max-w-7xl mx-auto pt-28 pb-6 lg:pt-32 lg:pb-8 px-0 md:px-6 lg:px-10">
+        {/* ── Title Section ────────────────────────────────────────────── */}
+        <div className="mb-6 md:mb-8 text-left px-6 md:px-0">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-honeycomb-charcoal tracking-tight">
+            Shop All
+          </h1>
+          <p className="text-honeycomb-medium mt-2 text-sm md:text-base">
+            Premium workspace accessories, handcrafted for you.
+          </p>
+        </div>
+
+        {/* ── Unified Glass Control Bar ─────────────────────────────────── */}
+        <div className="bg-white/80 backdrop-blur-md border-t border-b border-x-0 md:border border-honeycomb-cream/40 rounded-none md:rounded-3xl px-6 py-3 md:p-4 shadow-xl shadow-honeycomb-charcoal/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          
+          {/* Categories / Filter Scroll Row */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-1 -mx-6 px-6 md:mx-0 md:px-0">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-honeycomb-muted uppercase tracking-wider mr-1 shrink-0">
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Filter
+            </span>
+            {categoryLinks.map((cat) => {
+              const isActive = activeCategory === cat.slug
+              return (
+                <Link
+                  key={cat.slug || 'all'}
+                  href={categoryHref(cat.slug)}
+                  aria-pressed={isActive}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 border shrink-0 ${
+                    isActive
+                      ? 'bg-honeycomb-charcoal text-white border-honeycomb-charcoal shadow-sm'
+                      : 'bg-white border-honeycomb-cream/40 text-honeycomb-charcoal hover:bg-honeycomb-light hover:border-honeycomb-cream/80 hover:shadow-sm'
+                  }`}
+                >
+                  {cat.name}
+                </Link>
+              )
+            })}
           </div>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex items-center gap-2 w-full lg:max-w-xs">
-            <div className="relative flex-1">
+          {/* Divider on Mobile only */}
+          <div className="h-px bg-honeycomb-cream/15 md:hidden -mx-6" />
+
+          {/* Search + Sort Group */}
+          <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+            {/* Search */}
+            <form onSubmit={handleSearch} className="relative flex-1 md:w-64">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-honeycomb-muted pointer-events-none" />
               <input
-                ref={inputRef}
                 type="text"
-                defaultValue={searchQuery}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Search products…"
-                className="w-full pl-10 pr-9 py-2.5 rounded-full border border-honeycomb-cream/80 bg-white/80 text-sm text-honeycomb-charcoal placeholder:text-honeycomb-muted focus:outline-none focus:ring-2 focus:ring-honeycomb-charcoal/15 focus:border-honeycomb-charcoal/30 transition-all"
+                className="w-full pl-10 pr-9 py-2 rounded-full border border-honeycomb-cream/60 bg-white text-sm text-honeycomb-charcoal placeholder:text-honeycomb-muted focus:outline-none focus:ring-2 focus:ring-honeycomb-charcoal/15 focus:border-honeycomb-charcoal/30 transition-all"
               />
-              {searchQuery && (
+              {inputValue && (
                 <button
                   type="button"
-                  onClick={() => navigate({ q: null })}
+                  onClick={handleClear}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-honeycomb-muted hover:text-honeycomb-charcoal transition-colors"
                   aria-label="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
+            </form>
+
+            {/* Sort Dropdown */}
+            <div className="shrink-0">
+              <Menubar className="border-none bg-transparent p-0 h-auto">
+                <MenubarMenu>
+                  <MenubarTrigger className="group flex items-center justify-center gap-1.5 p-2.5 sm:px-4 sm:py-2 rounded-full border border-honeycomb-cream/60 bg-white text-sm font-semibold text-honeycomb-charcoal hover:bg-honeycomb-light hover:border-honeycomb-cream/80 hover:shadow-sm focus:bg-honeycomb-light data-[state=open]:bg-honeycomb-light data-[state=open]:text-honeycomb-charcoal data-[state=open]:border-honeycomb-cream/80 transition-all duration-200 whitespace-nowrap cursor-pointer">
+                    <ArrowUpDown className="w-4 h-4 text-honeycomb-muted group-hover:text-honeycomb-charcoal group-data-[state=open]:text-honeycomb-charcoal transition-colors shrink-0" />
+                    <span className="hidden sm:inline">{activeSortLabel}</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-honeycomb-muted transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0" />
+                  </MenubarTrigger>
+                  <MenubarContent align="end" className="w-48 bg-white rounded-2xl shadow-xl border border-honeycomb-cream/30 py-1">
+                    <MenubarRadioGroup value={activeSort} onValueChange={(val) => navigate({ sort: val })}>
+                      {sortOptions.map((opt) => (
+                        <MenubarRadioItem
+                          key={opt.value}
+                          value={opt.value}
+                          className="flex items-center pl-8 pr-4 py-2.5 text-sm text-honeycomb-medium hover:bg-honeycomb-light hover:cursor-pointer focus:bg-honeycomb-light data-[state=checked]:text-honeycomb-charcoal data-[state=checked]:font-semibold cursor-pointer"
+                        >
+                          {opt.label}
+                        </MenubarRadioItem>
+                      ))}
+                    </MenubarRadioGroup>
+                  </MenubarContent>
+                </MenubarMenu>
+              </Menubar>
             </div>
-            <button
-              type="submit"
-              className="px-4 py-2.5 rounded-full bg-honeycomb-charcoal text-white text-sm font-semibold hover:bg-honeycomb-slate transition-colors whitespace-nowrap"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-
-        {/* ── Row 2: Category pills + Sort ─────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-          {/* Filter icon */}
-          <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-honeycomb-muted uppercase tracking-wider mr-1">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            Filter
-          </span>
-
-          {/* Category Pills */}
-          {categoryLinks.map((cat) => {
-            const isActive = activeCategory === cat.slug
-            return (
-              <Link
-                key={cat.slug || 'all'}
-                href={categoryHref(cat.slug)}
-                aria-pressed={isActive}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
-                  isActive
-                    ? 'bg-honeycomb-charcoal text-white border-honeycomb-charcoal shadow-sm'
-                    : 'bg-white/80 border-honeycomb-cream/70 text-honeycomb-charcoal hover:bg-white hover:border-honeycomb-cream hover:shadow-sm'
-                }`}
-              >
-                {cat.name}
-              </Link>
-            )
-          })}
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* ── Sort Dropdown ─────────────────────────────────────────── */}
-          <div className="relative">
-            <button
-              onClick={() => setSortOpen((o) => !o)}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-honeycomb-cream/70 bg-white/80 text-sm font-medium text-honeycomb-charcoal hover:bg-white hover:shadow-sm transition-all duration-200 whitespace-nowrap"
-              aria-expanded={sortOpen}
-            >
-              <span>{activeSortLabel}</span>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-honeycomb-muted transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {sortOpen && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setSortOpen(false)}
-                />
-                {/* Dropdown */}
-                <div className="absolute right-0 top-full mt-2 z-20 w-48 bg-white rounded-2xl shadow-xl border border-honeycomb-cream/30 overflow-hidden py-1">
-                  {sortOptions.map((opt) => {
-                    const isSelected = activeSort === opt.value
-                    return (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          navigate({ sort: opt.value })
-                          setSortOpen(false)
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-honeycomb-light hover:cursor-pointer ${
-                          isSelected
-                            ? 'text-honeycomb-charcoal font-semibold bg-honeycomb-light/50'
-                            : 'text-honeycomb-medium'
-                        }`}
-                      >
-                        {opt.label}
-                        {isSelected && <Check className="w-3.5 h-3.5 text-honeycomb-charcoal" />}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
           </div>
         </div>
       </div>
