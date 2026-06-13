@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Star, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export default function ReviewForm({ productId, onSuccess, dialogMode = false }: Props) {
+  const router = useRouter()
   const [rating, setRating] = useState<number>(5)
   const [hoverRating, setHoverRating] = useState<number | null>(null)
   const [orderId, setOrderId] = useState('')
@@ -64,8 +66,11 @@ export default function ReviewForm({ productId, onSuccess, dialogMode = false }:
       }
 
       setSuccess(true)
+      router.refresh()
       if (onSuccess) {
-        onSuccess()
+        setTimeout(() => {
+          onSuccess()
+        }, 1500)
       }
     } catch (err: any) {
       setError(err.message || 'Failed to submit review.')
@@ -81,7 +86,7 @@ export default function ReviewForm({ productId, onSuccess, dialogMode = false }:
         <div>
           <h3 className="font-bold text-emerald-900 text-lg">Review Submitted!</h3>
           <p className="text-sm text-emerald-700 mt-1 max-w-md">
-            Thank you! Your review has been submitted for verification. It will be visible to other customers as soon as our team approves the Order ID.
+            Thank you! Your review has been submitted successfully.
           </p>
         </div>
       </div>
@@ -145,7 +150,7 @@ export default function ReviewForm({ productId, onSuccess, dialogMode = false }:
           required
         />
         <p className="text-xs text-honeycomb-muted">
-          Your order ID is used only by our administrators to verify you purchased this product. It will not be shown publicly.
+          Your Order ID is used solely to verify your purchase and will remain strictly confidential.
         </p>
       </FormItem>
 
