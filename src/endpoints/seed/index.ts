@@ -1,6 +1,7 @@
 import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payload'
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
 function createRichText(text: string): any {
   return {
@@ -200,10 +201,22 @@ export const seed = async ({
   // The images are already pushed to git and served statically from public/media, so disk writes are unnecessary during seeding.
   const mediaConfig = payload.collections['media']?.config
   let originalDisableLocalStorage = false
+  let originalStaticDir: string | undefined = undefined
+  const tempDir = path.join(os.tmpdir(), 'payload-media-temp-seed')
+
   if (mediaConfig?.upload) {
     originalDisableLocalStorage = !!mediaConfig.upload.disableLocalStorage
     mediaConfig.upload.disableLocalStorage = true
     payload.logger.info('Temporarily disabled local storage file writes for media uploads.')
+
+    if (typeof mediaConfig.upload.staticDir === 'string') {
+      originalStaticDir = mediaConfig.upload.staticDir
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true })
+      }
+      mediaConfig.upload.staticDir = tempDir
+      payload.logger.info(`Temporarily changed staticDir to ${tempDir} to avoid naming collisions.`)
+    }
   }
 
   try {
@@ -405,7 +418,18 @@ export const seed = async ({
     // Restore original config value
     if (mediaConfig?.upload) {
       mediaConfig.upload.disableLocalStorage = originalDisableLocalStorage
-      payload.logger.info('Restored original media upload disableLocalStorage config.')
+      if (originalStaticDir !== undefined) {
+        mediaConfig.upload.staticDir = originalStaticDir
+      }
+      payload.logger.info('Restored original media upload config.')
+    }
+    // Clean up temp directory
+    try {
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true })
+      }
+    } catch (err) {
+      payload.logger.error({ err, message: 'Failed to clean up temp seed directory' })
     }
   }
 }
