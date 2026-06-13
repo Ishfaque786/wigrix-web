@@ -196,197 +196,215 @@ export const seed = async ({
 }): Promise<void> => {
   payload.logger.info('Seeding database with Wigrix products...')
 
-  payload.logger.info(`— Clearing globals...`)
-  await Promise.all(
-    globals.map((global) =>
-      payload.updateGlobal({
-        slug: global,
-        data: {
-          navItems: [],
-        },
-        depth: 0,
-        context: {
-          disableRevalidate: true,
-        },
-      }),
-    ),
-  )
-
-  payload.logger.info(`— Clearing products, categories, and media collections...`)
-  for (const collection of collections) {
-    await payload.db.deleteMany({ collection, req, where: {} })
-    if (payload.collections[collection].config.versions) {
-      await payload.db.deleteVersions({ collection, req, where: {} })
-    }
+  // Temporarily disable local storage writes to bypass EROFS read-only filesystem errors on production/serverless environments.
+  // The images are already pushed to git and served statically from public/media, so disk writes are unnecessary during seeding.
+  const mediaConfig = payload.collections['media']?.config
+  let originalDisableLocalStorage = false
+  if (mediaConfig?.upload) {
+    originalDisableLocalStorage = !!mediaConfig.upload.disableLocalStorage
+    mediaConfig.upload.disableLocalStorage = true
+    payload.logger.info('Temporarily disabled local storage file writes for media uploads.')
   }
 
-  payload.logger.info(`— Uploading product media files...`)
-  const mediaMap: Record<string, string | number> = {}
-  
-  // Extract all unique image filenames to upload
-  const allImageFilenames = Array.from(
-    new Set(productSeedData.flatMap((p) => p.imageFiles))
-  )
-
-  for (const filename of allImageFilenames) {
-    const filePath = path.join(process.cwd(), 'public/media', filename)
-    if (fs.existsSync(filePath)) {
-      const fileBuffer = fs.readFileSync(filePath)
-      const stats = fs.statSync(filePath)
-      const ext = path.extname(filename).toLowerCase()
-      const mimetype = 
-        ext === '.webp' ? 'image/webp' : 
-        ext === '.gif' ? 'image/gif' : 
-        ext === '.png' ? 'image/png' : 
-        'image/jpeg'
-
-      const media = await payload.create({
-        collection: 'media',
-        req,
-        data: {
-          alt: filename.replace(ext, '').replace(/[-_]/g, ' '),
-        },
-        file: {
-          name: filename,
-          data: fileBuffer,
-          mimetype,
-          size: stats.size,
-        },
-      })
-      mediaMap[filename] = media.id
-      payload.logger.info(`Uploaded ${filename} as media ID ${media.id}`)
-    } else {
-      payload.logger.error(`Local image file not found: ${filePath}`)
-    }
-  }
-
-  payload.logger.info(`— Creating categories...`)
-  const categoryMap: Record<string, string | number> = {}
-  const uniqueCategories = Array.from(
-    new Set(
-      productSeedData.map((p) =>
-        JSON.stringify({ name: p.categoryName, slug: p.categoryHandle })
-      )
+  try {
+    payload.logger.info(`— Clearing globals...`)
+    await Promise.all(
+      globals.map((global) =>
+        payload.updateGlobal({
+          slug: global,
+          data: {
+            navItems: [],
+          },
+          depth: 0,
+          context: {
+            disableRevalidate: true,
+          },
+        }),
+      ),
     )
-  ).map((s) => JSON.parse(s))
 
-  // Explicitly add Bundles and Accessories if not present
-  const extraCategories = [
-    { name: 'Bundles', slug: 'bundles' },
-    { name: 'Accessories', slug: 'accessories' },
-  ]
-
-  const allCatsToCreate = [...uniqueCategories]
-  for (const extra of extraCategories) {
-    if (!allCatsToCreate.some((c) => c.slug === extra.slug)) {
-      allCatsToCreate.push(extra)
+    payload.logger.info(`— Clearing products, categories, and media collections...`)
+    for (const collection of collections) {
+      await payload.db.deleteMany({ collection, req, where: {} })
+      if (payload.collections[collection].config.versions) {
+        await payload.db.deleteVersions({ collection, req, where: {} })
+      }
     }
-  }
 
-  for (const cat of allCatsToCreate) {
-    const createdCat = await payload.create({
-      collection: 'categories',
-      req,
-      data: {
-        title: cat.name,
-        slug: cat.slug,
-      },
-    })
-    categoryMap[cat.slug] = createdCat.id
-    payload.logger.info(`Created category ${cat.name} with ID ${createdCat.id}`)
-  }
+    payload.logger.info(`— Uploading product media files...`)
+    const mediaMap: Record<string, string | number> = {}
+    
+    // Extract all unique image filenames to upload
+    const allImageFilenames = Array.from(
+      new Set(productSeedData.flatMap((p) => p.imageFiles))
+    )
 
-  payload.logger.info(`— Creating products...`)
-  for (const prod of productSeedData) {
-    const gallery = prod.imageFiles
-      .map((filename) => {
-        const id = mediaMap[filename]
-        return id ? { image: id as any } : null
-      })
-      .filter(Boolean) as any[]
+    for (const filename of allImageFilenames) {
+      const filePath = path.join(process.cwd(), 'public/media', filename)
+      if (fs.existsSync(filePath)) {
+        const fileBuffer = fs.readFileSync(filePath)
+        const stats = fs.statSync(filePath)
+        const ext = path.extname(filename).toLowerCase()
+        const mimetype = 
+          ext === '.webp' ? 'image/webp' : 
+          ext === '.gif' ? 'image/gif' : 
+          ext === '.png' ? 'image/png' : 
+          'image/jpeg'
 
-    const mainMediaId = gallery[0]?.image
-    const catId = categoryMap[prod.categoryHandle]
+        const media = await payload.create({
+          collection: 'media',
+          req,
+          data: {
+            alt: filename.replace(ext, '').replace(/[-_]/g, ' '),
+          },
+          file: {
+            name: filename,
+            data: fileBuffer,
+            mimetype,
+            size: stats.size,
+          },
+        })
+        mediaMap[filename] = media.id
+        payload.logger.info(`Uploaded ${filename} as media ID ${media.id}`)
+      } else {
+        payload.logger.error(`Local image file not found: ${filePath}`)
+      }
+    }
 
-    const externalLinks = [
-      {
-        label: 'Buy on Amazon',
-        url: `https://www.amazon.in/s?k=${encodeURIComponent(prod.name)}`,
-      },
-      {
-        label: 'Buy on Flipkart',
-        url: `https://www.flipkart.com/search?q=${encodeURIComponent(prod.name)}`,
-      },
+    payload.logger.info(`— Creating categories...`)
+    const categoryMap: Record<string, string | number> = {}
+    const uniqueCategories = Array.from(
+      new Set(
+        productSeedData.map((p) =>
+          JSON.stringify({ name: p.categoryName, slug: p.categoryHandle })
+        )
+      )
+    ).map((s) => JSON.parse(s))
+
+    // Explicitly add Bundles and Accessories if not present
+    const extraCategories = [
+      { name: 'Bundles', slug: 'bundles' },
+      { name: 'Accessories', slug: 'accessories' },
     ]
 
-    await payload.create({
-      collection: 'products',
+    const allCatsToCreate = [...uniqueCategories]
+    for (const extra of extraCategories) {
+      if (!allCatsToCreate.some((c) => c.slug === extra.slug)) {
+        allCatsToCreate.push(extra)
+      }
+    }
+
+    for (const cat of allCatsToCreate) {
+      const createdCat = await payload.create({
+        collection: 'categories',
+        req,
+        data: {
+          title: cat.name,
+          slug: cat.slug,
+        },
+      })
+      categoryMap[cat.slug] = createdCat.id
+      payload.logger.info(`Created category ${cat.name} with ID ${createdCat.id}`)
+    }
+
+    payload.logger.info(`— Creating products...`)
+    for (const prod of productSeedData) {
+      const gallery = prod.imageFiles
+        .map((filename) => {
+          const id = mediaMap[filename]
+          return id ? { image: id as any } : null
+        })
+        .filter(Boolean) as any[]
+
+      const mainMediaId = gallery[0]?.image
+      const catId = categoryMap[prod.categoryHandle]
+
+      const externalLinks = [
+        {
+          label: 'Buy on Amazon',
+          url: `https://www.amazon.in/s?k=${encodeURIComponent(prod.name)}`,
+        },
+        {
+          label: 'Buy on Flipkart',
+          url: `https://www.flipkart.com/search?q=${encodeURIComponent(prod.name)}`,
+        },
+      ]
+
+      await payload.create({
+        collection: 'products',
+        req,
+        data: {
+          title: prod.name,
+          slug: prod.handle,
+          description: createRichText(prod.description),
+          priceInUSD: prod.priceInUSD,
+          externalLinks,
+          categories: catId ? [catId as any] : [],
+          gallery,
+          meta: {
+            title: `${prod.name} | Wigrix`,
+            description: prod.description,
+            image: mainMediaId || undefined,
+          },
+          _status: 'published',
+        },
+      })
+      payload.logger.info(`Created product ${prod.name}`)
+    }
+
+    payload.logger.info(`— Updating header & footer globals...`)
+    await payload.updateGlobal({
+      slug: 'header',
       req,
       data: {
-        title: prod.name,
-        slug: prod.handle,
-        description: createRichText(prod.description),
-        priceInUSD: prod.priceInUSD,
-        externalLinks,
-        categories: catId ? [catId as any] : [],
-        gallery,
-        meta: {
-          title: `${prod.name} | Wigrix`,
-          description: prod.description,
-          image: mainMediaId || undefined,
-        },
-        _status: 'published',
+        navItems: [
+          {
+            link: {
+              type: 'custom',
+              label: 'Home',
+              url: '/',
+            },
+          },
+          {
+            link: {
+              type: 'custom',
+              label: 'Shop',
+              url: '/shop',
+            },
+          },
+        ],
       },
     })
-    payload.logger.info(`Created product ${prod.name}`)
+
+    await payload.updateGlobal({
+      slug: 'footer',
+      req,
+      data: {
+        navItems: [
+          {
+            link: {
+              type: 'custom',
+              label: 'Shop All',
+              url: '/shop',
+            },
+          },
+          {
+            link: {
+              type: 'custom',
+              label: 'Admin Panel',
+              url: '/admin',
+            },
+          },
+        ],
+      },
+    })
+
+    payload.logger.info('Wigrix products and categories seeded successfully!')
+  } finally {
+    // Restore original config value
+    if (mediaConfig?.upload) {
+      mediaConfig.upload.disableLocalStorage = originalDisableLocalStorage
+      payload.logger.info('Restored original media upload disableLocalStorage config.')
+    }
   }
-
-  payload.logger.info(`— Updating header & footer globals...`)
-  await payload.updateGlobal({
-    slug: 'header',
-    req,
-    data: {
-      navItems: [
-        {
-          link: {
-            type: 'custom',
-            label: 'Home',
-            url: '/',
-          },
-        },
-        {
-          link: {
-            type: 'custom',
-            label: 'Shop',
-            url: '/shop',
-          },
-        },
-      ],
-    },
-  })
-
-  await payload.updateGlobal({
-    slug: 'footer',
-    req,
-    data: {
-      navItems: [
-        {
-          link: {
-            type: 'custom',
-            label: 'Shop All',
-            url: '/shop',
-          },
-        },
-        {
-          link: {
-            type: 'custom',
-            label: 'Admin Panel',
-            url: '/admin',
-          },
-        },
-      ],
-    },
-  })
-
-  payload.logger.info('Wigrix products and categories seeded successfully!')
 }
