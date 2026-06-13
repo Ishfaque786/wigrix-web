@@ -1,77 +1,192 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
+import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payload'
+import fs from 'fs'
+import path from 'path'
 
-import { contactFormData } from './contact-form'
-import { contactPageData } from './contact-page'
-import { productHatData } from './product-hat'
-import { productTshirtData, productTshirtVariant } from './product-tshirt'
-import { homePageData } from './home'
-import { imageHatData } from './image-hat'
-import { imageTshirtBlackData } from './image-tshirt-black'
-import { imageTshirtWhiteData } from './image-tshirt-white'
-import { imageHero1Data } from './image-hero-1'
-import { Address, Transaction, VariantOption } from '@/payload-types'
+function createRichText(text: string): any {
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      children: [
+        {
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [
+            {
+              type: 'text',
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text: text,
+              version: 1,
+            },
+          ],
+        },
+      ],
+    },
+  }
+}
 
-const collections: CollectionSlug[] = [
-  'categories',
-  'media',
-  'pages',
-  'products',
-  'forms',
-  'form-submissions',
-  'variants',
-  'variantOptions',
-  'variantTypes',
-  'carts',
-  'transactions',
-  'addresses',
-  'orders',
+const productSeedData = [
+  {
+    name: 'Spinning Desk Organizer',
+    handle: 'spinning-desk-organiser',
+    categoryName: 'Desk Organisers',
+    categoryHandle: 'desk-organisers',
+    imageFiles: [
+      '2025-09-26_0c9265407d8678.webp',
+      '2025-09-26_14a997b13ec12.webp',
+      '2025-09-26_592cc5fb604d1.webp',
+      '2025-09-26_f362e06876ae78.webp',
+      'cover.jpg',
+    ],
+    description: 'Experience the perfect blend of engineering and aesthetics. Our signature spinning organizer keeps your tools accessible with a satisfying 360° rotation mechanism.',
+    priceInUSD: 19,
+    priceInINR: 949,
+  },
+  {
+    name: 'Hexagon Desk Organizer',
+    handle: 'hexagon-organizer',
+    categoryName: 'Desk Organisers',
+    categoryHandle: 'desk-organisers',
+    imageFiles: [
+      '2025-04-17_4887f495eafa98.webp',
+      '2025-04-17_4e2373abe482a8.webp',
+      '2025-04-17_d12403458d4ec8.webp',
+      '2025-04-17_f7cbc9e2de9b38.webp',
+    ],
+    description: 'Modular storage for your pens, pencils, and tools. Mix and match to create your perfect setup.',
+    priceInUSD: 15,
+    priceInINR: 499,
+  },
+  {
+    name: 'Kumiko Design Desk Organizer',
+    handle: 'kumiko-design-desk-organizer',
+    categoryName: 'Desk Organisers',
+    categoryHandle: 'desk-organisers',
+    imageFiles: [
+      '2025-04-20_4ef24035daf998.webp',
+      '2025-04-20_8758e0102b4df.webp',
+      '2025-04-20_a2def065796.webp',
+      '2025-04-20_e110443def369.webp',
+    ],
+    description: 'Traditional Japanese Kumiko-inspired design meets modern functionality. A stunning desk organizer with intricate geometric patterns.',
+    priceInUSD: 9,
+    priceInINR: 449,
+  },
+  {
+    name: 'Hexagon Remote Control Holder',
+    handle: 'hexagon-remote-control-holder',
+    categoryName: 'Desk Organisers',
+    categoryHandle: 'desk-organisers',
+    imageFiles: [
+      '2025-04-28_7a90bd62c80fa8.webp',
+      '2025-04-28_95689fdd23634.webp',
+      '2025-04-28_b353f0a3a60518.webp',
+    ],
+    description: 'Keep your remotes organized and within reach. Hexagonal design adds style to your living room or desk setup.',
+    priceInUSD: 12,
+    priceInINR: 649,
+  },
+  {
+    name: 'Shade Stand Mini',
+    handle: 'shade-stand-mini',
+    categoryName: 'Gadget Stands',
+    categoryHandle: 'gadget-stands',
+    imageFiles: [
+      '2025-07-08_2437c5d555645.webp',
+      '2025-07-08_272150b98d44e.webp',
+      '2025-07-08_3ad6dc5cdaa21.webp',
+      '2025-07-08_c845701cb88e28.webp',
+    ],
+    description: 'Premium Sunglasses Holder. Keep your shades safe and stylishly displayed on your desk.',
+    priceInUSD: 19,
+    priceInINR: 999,
+  },
+  {
+    name: 'Acoustic Phone Stand',
+    handle: 'acoustic-phone-stand',
+    categoryName: 'Gadget Stands',
+    categoryHandle: 'gadget-stands',
+    imageFiles: [
+      '2025-06-04_35b710890382e8.webp',
+      '2025-06-04_4c8a7dd4717628.webp',
+      '2025-06-04_4df782b5db641.webp',
+      '2025-06-04_b6ad96183145f.webp',
+    ],
+    description: "A passive amplifier that naturally boosts your phone's volume while holding it at the perfect viewing angle.",
+    priceInUSD: 14,
+    priceInINR: 699,
+  },
+  {
+    name: 'Gear Phone Stand',
+    handle: 'gear-phone-stand',
+    categoryName: 'Gadget Stands',
+    categoryHandle: 'gadget-stands',
+    imageFiles: [
+      '2024-10-26_10840bf7e4f65.webp',
+      '2024-10-26_59846b8ccd557.webp',
+      '2024-10-26_90e0985e87442.webp',
+      '2024-10-26_a3147646e14bf.webp',
+      '2024-10-26_af276e69e5155.webp',
+    ],
+    description: 'A unique gear-inspired phone stand with industrial aesthetics. Holds your phone at the perfect angle.',
+    priceInUSD: 10,
+    priceInINR: 499,
+  },
+  {
+    name: 'Honeycomb Desk Planter',
+    handle: 'honeycomb-planter',
+    categoryName: 'Desk Planters',
+    categoryHandle: 'desk-planters',
+    imageFiles: [
+      '2024-02-04_c3963008f252.webp',
+      '2025-07-22_63b8f9d731fed.webp',
+      '2025-07-22_8155c23f1d828.webp',
+    ],
+    description: 'Bring nature indoors with this geometric planter. Perfect for succulents and small desk plants.',
+    priceInUSD: 16,
+    priceInINR: 799,
+  },
+  {
+    name: 'Geometric Succulent Pot',
+    handle: 'geometric-succulent-pot',
+    categoryName: 'Desk Planters',
+    categoryHandle: 'desk-planters',
+    imageFiles: [
+      '2024-11-20_c5b4c89c76d64.webp',
+      '2024-11-24_3158230890f7e.webp',
+      '2024-11-24_f1031f0c12062.webp',
+    ],
+    description: 'A modern geometric design pot perfect for small succulents and cacti.',
+    priceInUSD: 9,
+    priceInINR: 449,
+  },
+  {
+    name: 'Minimalist Pen Holder',
+    handle: 'minimalist-pen-holder',
+    categoryName: 'Pen Holders',
+    categoryHandle: 'pen-holders',
+    imageFiles: [
+      '2023-12-30_a8fedab5e5305.webp',
+      '2023-12-30_c632a791e240b.webp',
+      '2023-12-30_cb2b334bcef24.webp',
+      '2024-03-03_262db417f12e.webp',
+    ],
+    description: 'Clean lines and thoughtful design. Perfect for keeping your favorite pens within reach.',
+    priceInUSD: 7,
+    priceInINR: 349,
+  },
 ]
 
-const categories = ['Accessories', 'T-Shirts', 'Hats']
-
-const sizeVariantOptions = [
-  { label: 'Small', value: 'small' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Large', value: 'large' },
-  { label: 'X Large', value: 'xlarge' },
-]
-
-const colorVariantOptions = [
-  { label: 'Black', value: 'black' },
-  { label: 'White', value: 'white' },
-]
-
+const collections: CollectionSlug[] = ['products', 'categories', 'media']
 const globals: GlobalSlug[] = ['header', 'footer']
 
-const baseAddressUSData: Transaction['billingAddress'] = {
-  title: 'Dr.',
-  firstName: 'Otto',
-  lastName: 'Octavius',
-  phone: '1234567890',
-  company: 'Oscorp',
-  addressLine1: '123 Main St',
-  addressLine2: 'Suite 100',
-  city: 'New York',
-  state: 'NY',
-  postalCode: '10001',
-  country: 'US',
-}
-
-const baseAddressUKData: Transaction['billingAddress'] = {
-  title: 'Mr.',
-  firstName: 'Oliver',
-  lastName: 'Twist',
-  phone: '1234567890',
-  addressLine1: '48 Great Portland St',
-  city: 'London',
-  postalCode: 'W1W 7ND',
-  country: 'GB',
-}
-
-// Next.js revalidation errors are normal when seeding the database without a server running
-// i.e. running `yarn seed` locally instead of using the admin UI within an active app
-// The app is not running to revalidate the pages and so the API routes are not available
-// These error messages can be ignored: `Error hitting revalidate route for...`
 export const seed = async ({
   payload,
   req,
@@ -79,15 +194,9 @@ export const seed = async ({
   payload: Payload
   req: PayloadRequest
 }): Promise<void> => {
-  payload.logger.info('Seeding database...')
+  payload.logger.info('Seeding database with Wigrix products...')
 
-  // we need to clear the media directory before seeding
-  // as well as the collections and globals
-  // this is because while `yarn seed` drops the database
-  // the custom `/api/seed` endpoint does not
-  payload.logger.info(`— Clearing collections and globals...`)
-
-  // clear the database
+  payload.logger.info(`— Clearing globals...`)
   await Promise.all(
     globals.map((global) =>
       payload.updateGlobal({
@@ -103,6 +212,7 @@ export const seed = async ({
     ),
   )
 
+  payload.logger.info(`— Clearing products, categories, and media collections...`)
   for (const collection of collections) {
     await payload.db.deleteMany({ collection, req, where: {} })
     if (payload.collections[collection].config.versions) {
@@ -110,488 +220,173 @@ export const seed = async ({
     }
   }
 
-  payload.logger.info(`— Seeding customer and customer data...`)
+  payload.logger.info(`— Uploading product media files...`)
+  const mediaMap: Record<string, string | number> = {}
+  
+  // Extract all unique image filenames to upload
+  const allImageFilenames = Array.from(
+    new Set(productSeedData.flatMap((p) => p.imageFiles))
+  )
 
-  await payload.delete({
-    collection: 'users',
-    depth: 0,
-    where: {
-      email: {
-        equals: 'customer@example.com',
-      },
-    },
-  })
+  for (const filename of allImageFilenames) {
+    const filePath = path.join(process.cwd(), 'public/media', filename)
+    if (fs.existsSync(filePath)) {
+      const fileBuffer = fs.readFileSync(filePath)
+      const stats = fs.statSync(filePath)
+      const ext = path.extname(filename).toLowerCase()
+      const mimetype = 
+        ext === '.webp' ? 'image/webp' : 
+        ext === '.gif' ? 'image/gif' : 
+        ext === '.png' ? 'image/png' : 
+        'image/jpeg'
 
-  payload.logger.info(`— Seeding media...`)
-
-  const [imageHatBuffer, imageTshirtBlackBuffer, imageTshirtWhiteBuffer, heroBuffer] =
-    await Promise.all([
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/3.x/templates/ecommerce/src/endpoints/seed/hat-logo.png',
-      ),
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/3.x/templates/ecommerce/src/endpoints/seed/tshirt-black.png',
-      ),
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/3.x/templates/ecommerce/src/endpoints/seed/tshirt-white.png',
-      ),
-      fetchFileByURL(
-        'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/3.x/templates/website/src/endpoints/seed/image-hero1.webp',
-      ),
-    ])
-
-  const [
-    customer,
-    imageHat,
-    imageTshirtBlack,
-    imageTshirtWhite,
-    imageHero,
-    accessoriesCategory,
-    tshirtsCategory,
-    hatsCategory,
-  ] = await Promise.all([
-    payload.create({
-      collection: 'users',
-      data: {
-        name: 'Customer',
-        email: 'customer@example.com',
-        password: 'password',
-        roles: ['customer'],
-      },
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageHatData,
-      file: imageHatBuffer,
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageTshirtBlackData,
-      file: imageTshirtBlackBuffer,
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageTshirtWhiteData,
-      file: imageTshirtWhiteBuffer,
-    }),
-    payload.create({
-      collection: 'media',
-      data: imageHero1Data,
-      file: heroBuffer,
-    }),
-    ...categories.map((category) =>
-      payload.create({
-        collection: 'categories',
+      const media = await payload.create({
+        collection: 'media',
+        req,
         data: {
-          title: category,
-          slug: category,
+          alt: filename.replace(ext, '').replace(/[-_]/g, ' '),
         },
-      }),
-    ),
-  ])
-
-  payload.logger.info(`— Seeding variant types and options...`)
-
-  const sizeVariantType = await payload.create({
-    collection: 'variantTypes',
-    data: {
-      name: 'size',
-      label: 'Size',
-    },
-  })
-
-  const sizeVariantOptionsResults: VariantOption[] = []
-
-  for (const option of sizeVariantOptions) {
-    const result = await payload.create({
-      collection: 'variantOptions',
-      data: {
-        ...option,
-        variantType: sizeVariantType.id,
-      },
-    })
-    sizeVariantOptionsResults.push(result)
-  }
-
-  const [small, medium, large, xlarge] = sizeVariantOptionsResults
-
-  const colorVariantType = await payload.create({
-    collection: 'variantTypes',
-    data: {
-      name: 'color',
-      label: 'Color',
-    },
-  })
-
-  const [black, white] = await Promise.all(
-    colorVariantOptions.map((option) => {
-      return payload.create({
-        collection: 'variantOptions',
-        data: {
-          ...option,
-          variantType: colorVariantType.id,
+        file: {
+          name: filename,
+          data: fileBuffer,
+          mimetype,
+          size: stats.size,
         },
       })
-    }),
-  )
-
-  payload.logger.info(`— Seeding products...`)
-
-  const productHat = await payload.create({
-    collection: 'products',
-    depth: 0,
-    data: productHatData({
-      galleryImage: imageHat,
-      metaImage: imageHat,
-      variantTypes: [colorVariantType],
-      categories: [hatsCategory],
-      relatedProducts: [],
-    }),
-  })
-
-  const productTshirt = await payload.create({
-    collection: 'products',
-    depth: 0,
-    data: productTshirtData({
-      galleryImages: [
-        { image: imageTshirtBlack, variantOption: black },
-        { image: imageTshirtWhite, variantOption: white },
-      ],
-      metaImage: imageTshirtBlack,
-      contentImage: imageHero,
-      variantTypes: [colorVariantType, sizeVariantType],
-      categories: [tshirtsCategory],
-      relatedProducts: [productHat],
-    }),
-  })
-
-  let hoodieID: number | string = productTshirt.id
-
-  if (payload.db.defaultIDType === 'text') {
-    hoodieID = `"${hoodieID}"`
+      mediaMap[filename] = media.id
+      payload.logger.info(`Uploaded ${filename} as media ID ${media.id}`)
+    } else {
+      payload.logger.error(`Local image file not found: ${filePath}`)
+    }
   }
 
-  const [
-    smallTshirtHoodieVariant,
-    mediumTshirtHoodieVariant,
-    largeTshirtHoodieVariant,
-    xlargeTshirtHoodieVariant,
-  ] = await Promise.all(
-    [small, medium, large, xlarge].map((variantOption) =>
-      payload.create({
-        collection: 'variants',
-        depth: 0,
-        data: productTshirtVariant({
-          product: productTshirt,
-          variantOptions: [variantOption, white],
-        }),
-      }),
-    ),
-  )
+  payload.logger.info(`— Creating categories...`)
+  const categoryMap: Record<string, string | number> = {}
+  const uniqueCategories = Array.from(
+    new Set(
+      productSeedData.map((p) =>
+        JSON.stringify({ name: p.categoryName, slug: p.categoryHandle })
+      )
+    )
+  ).map((s) => JSON.parse(s))
 
-  await Promise.all(
-    [small, medium, large, xlarge].map((variantOption) =>
-      payload.create({
-        collection: 'variants',
-        depth: 0,
-        data: productTshirtVariant({
-          product: productTshirt,
-          variantOptions: [variantOption, black],
-          ...(variantOption.value === 'medium' ? { inventory: 0 } : {}),
-        }),
-      }),
-    ),
-  )
+  // Explicitly add Bundles and Accessories if not present
+  const extraCategories = [
+    { name: 'Bundles', slug: 'bundles' },
+    { name: 'Accessories', slug: 'accessories' },
+  ]
 
-  payload.logger.info(`— Seeding contact form...`)
-
-  const contactForm = await payload.create({
-    collection: 'forms',
-    depth: 0,
-    data: contactFormData(),
-  })
-
-  payload.logger.info(`— Seeding pages...`)
-
-  const [_, contactPage] = await Promise.all([
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: homePageData({
-        contentImage: imageHero,
-        metaImage: imageHat,
-      }),
-    }),
-    payload.create({
-      collection: 'pages',
-      depth: 0,
-      data: contactPageData({
-        contactForm: contactForm,
-      }),
-    }),
-  ])
-
-  payload.logger.info(`— Seeding addresses...`)
-
-  const customerUSAddress = await payload.create({
-    collection: 'addresses',
-    depth: 0,
-    data: {
-      customer: customer.id,
-      ...(baseAddressUSData as Address),
-    },
-  })
-
-  const customerUKAddress = await payload.create({
-    collection: 'addresses',
-    depth: 0,
-    data: {
-      customer: customer.id,
-      ...(baseAddressUKData as Address),
-    },
-  })
-
-  payload.logger.info(`— Seeding transactions...`)
-
-  const pendingTransaction = await payload.create({
-    collection: 'transactions',
-    data: {
-      currency: 'USD',
-      customer: customer.id,
-      paymentMethod: 'stripe',
-      stripe: {
-        customerID: 'cus_123',
-        paymentIntentID: 'pi_123',
-      },
-      status: 'pending',
-      billingAddress: baseAddressUSData,
-    },
-  })
-
-  const succeededTransaction = await payload.create({
-    collection: 'transactions',
-    data: {
-      currency: 'USD',
-      customer: customer.id,
-      paymentMethod: 'stripe',
-      stripe: {
-        customerID: 'cus_123',
-        paymentIntentID: 'pi_123',
-      },
-      status: 'succeeded',
-      billingAddress: baseAddressUSData,
-    },
-  })
-
-  let succeededTransactionID: number | string = succeededTransaction.id
-
-  if (payload.db.defaultIDType === 'text') {
-    succeededTransactionID = `"${succeededTransactionID}"`
+  const allCatsToCreate = [...uniqueCategories]
+  for (const extra of extraCategories) {
+    if (!allCatsToCreate.some((c) => c.slug === extra.slug)) {
+      allCatsToCreate.push(extra)
+    }
   }
 
-  payload.logger.info(`— Seeding carts...`)
-
-  // This cart is open as it's created now
-  const openCart = await payload.create({
-    collection: 'carts',
-    data: {
-      customer: customer.id,
-      currency: 'USD',
-      items: [
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-    },
-  })
-
-  const oldTimestamp = new Date('2023-01-01T00:00:00Z').toISOString()
-
-  // Cart is abandoned because it was created long in the past
-  const abandonedCart = await payload.create({
-    collection: 'carts',
-    data: {
-      currency: 'USD',
-      createdAt: oldTimestamp,
-      items: [
-        {
-          product: productHat.id,
-          quantity: 1,
-        },
-      ],
-    },
-  })
-
-  // Cart is purchased because it has a purchasedAt date
-  const completedCart = await payload.create({
-    collection: 'carts',
-    data: {
-      customer: customer.id,
-      currency: 'USD',
-      purchasedAt: new Date().toISOString(),
-      subtotal: 7499,
-      items: [
-        {
-          product: productTshirt.id,
-          variant: smallTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-    },
-  })
-
-  let completedCartID: number | string = completedCart.id
-
-  if (payload.db.defaultIDType === 'text') {
-    completedCartID = `"${completedCartID}"`
-  }
-
-  payload.logger.info(`— Seeding orders...`)
-
-  const orderInCompleted = await payload.create({
-    collection: 'orders',
-    data: {
-      amount: 7499,
-      currency: 'USD',
-      customer: customer.id,
-      shippingAddress: baseAddressUSData,
-      items: [
-        {
-          product: productTshirt.id,
-          variant: smallTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-      status: 'completed',
-      transactions: [succeededTransaction.id],
-    },
-  })
-
-  const orderInProcessing = await payload.create({
-    collection: 'orders',
-    data: {
-      amount: 7499,
-      currency: 'USD',
-      customer: customer.id,
-      shippingAddress: baseAddressUSData,
-      items: [
-        {
-          product: productTshirt.id,
-          variant: smallTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-        {
-          product: productTshirt.id,
-          variant: mediumTshirtHoodieVariant.id,
-          quantity: 1,
-        },
-      ],
-      status: 'processing',
-      transactions: [succeededTransaction.id],
-    },
-  })
-
-  payload.logger.info(`— Seeding globals...`)
-
-  await Promise.all([
-    payload.updateGlobal({
-      slug: 'header',
+  for (const cat of allCatsToCreate) {
+    const createdCat = await payload.create({
+      collection: 'categories',
+      req,
       data: {
-        navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Home',
-              url: '/',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Shop',
-              url: '/shop',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Account',
-              url: '/account',
-            },
-          },
-        ],
+        title: cat.name,
+        slug: cat.slug,
       },
-    }),
-    payload.updateGlobal({
-      slug: 'footer',
+    })
+    categoryMap[cat.slug] = createdCat.id
+    payload.logger.info(`Created category ${cat.name} with ID ${createdCat.id}`)
+  }
+
+  payload.logger.info(`— Creating products...`)
+  for (const prod of productSeedData) {
+    const gallery = prod.imageFiles
+      .map((filename) => {
+        const id = mediaMap[filename]
+        return id ? { image: id as any } : null
+      })
+      .filter(Boolean) as any[]
+
+    const mainMediaId = gallery[0]?.image
+    const catId = categoryMap[prod.categoryHandle]
+
+    const externalLinks = [
+      {
+        label: 'Buy on Amazon',
+        url: `https://www.amazon.in/s?k=${encodeURIComponent(prod.name)}`,
+      },
+      {
+        label: 'Buy on Flipkart',
+        url: `https://www.flipkart.com/search?q=${encodeURIComponent(prod.name)}`,
+      },
+    ]
+
+    await payload.create({
+      collection: 'products',
+      req,
       data: {
-        navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Admin',
-              url: '/admin',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Find my order',
-              url: '/find-order',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Source Code',
-              newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/3.x/templates/website',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Payload',
-              newTab: true,
-              url: 'https://payloadcms.com/',
-            },
-          },
-        ],
+        title: prod.name,
+        slug: prod.handle,
+        description: createRichText(prod.description),
+        priceInUSD: prod.priceInUSD,
+        externalLinks,
+        categories: catId ? [catId as any] : [],
+        gallery,
+        meta: {
+          title: `${prod.name} | Wigrix`,
+          description: prod.description,
+          image: mainMediaId || undefined,
+        },
+        _status: 'published',
       },
-    }),
-  ])
+    })
+    payload.logger.info(`Created product ${prod.name}`)
+  }
 
-  payload.logger.info('Seeded database successfully!')
-}
-
-async function fetchFileByURL(url: string): Promise<File> {
-  const res = await fetch(url, {
-    credentials: 'include',
-    method: 'GET',
+  payload.logger.info(`— Updating header & footer globals...`)
+  await payload.updateGlobal({
+    slug: 'header',
+    req,
+    data: {
+      navItems: [
+        {
+          link: {
+            type: 'custom',
+            label: 'Home',
+            url: '/',
+          },
+        },
+        {
+          link: {
+            type: 'custom',
+            label: 'Shop',
+            url: '/shop',
+          },
+        },
+      ],
+    },
   })
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch file from ${url}, status: ${res.status}`)
-  }
+  await payload.updateGlobal({
+    slug: 'footer',
+    req,
+    data: {
+      navItems: [
+        {
+          link: {
+            type: 'custom',
+            label: 'Shop All',
+            url: '/shop',
+          },
+        },
+        {
+          link: {
+            type: 'custom',
+            label: 'Admin Panel',
+            url: '/admin',
+          },
+        },
+      ],
+    },
+  })
 
-  const data = await res.arrayBuffer()
-
-  return {
-    name: url.split('/').pop() || `file-${Date.now()}`,
-    data: Buffer.from(data),
-    mimetype: `image/${url.split('.').pop()}`,
-    size: data.byteLength,
-  }
+  payload.logger.info('Wigrix products and categories seeded successfully!')
 }
