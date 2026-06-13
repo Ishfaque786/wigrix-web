@@ -1,8 +1,9 @@
 'use client'
 import Link from 'next/link'
 import React, { Suspense, useState, useEffect, useRef } from 'react'
-import { Search, User, Menu, X, ArrowRight, LayoutGrid, ChevronDown } from 'lucide-react'
+import { Search, User, Menu, X, ArrowRight, LayoutGrid, ChevronDown, Loader2 } from 'lucide-react'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { cn } from '@/utilities/cn'
 import { LogoIcon } from '@/components/icons/logo'
 import type { Header } from 'src/payload-types'
@@ -37,6 +38,38 @@ function HeaderClientInner({ header, categories = [] }: Props) {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
+
+  useEffect(() => {
+    if (!searchQuery.trim() || !searchOpen) {
+      setSearchResults([])
+      setSearchLoading(false)
+      setShowSearchResults(false)
+      return
+    }
+
+    setShowSearchResults(true)
+    setSearchLoading(true)
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSearchResults(data.docs || [])
+        }
+      } catch (err) {
+        console.error('Search error:', err)
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, searchOpen])
+
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '')
     if (searchParams.get('q')) {
@@ -66,10 +99,12 @@ function HeaderClientInner({ header, categories = [] }: Props) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // close mobile menu on route change
+  // close mobile menu and search overlay on route change
   useEffect(() => {
     setMobileOpen(false)
     setCatOpen(false)
+    setSearchOpen(false)
+    setShowSearchResults(false)
   }, [pathname])
 
   // close category dropdown on outside click
@@ -214,51 +249,148 @@ function HeaderClientInner({ header, categories = [] }: Props) {
             {/* Right: Icons */}
             <div className="flex items-center gap-1">
               {/* Search Bar Container */}
-              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setSearchOpen(false)
-                      searchInputRef.current?.blur()
-                    }
-                  }}
-                  onBlur={() => {
-                    setTimeout(() => {
-                      if (!searchQuery.trim()) {
-                        setSearchOpen(false)
-                      }
-                    }, 200)
-                  }}
-                  className={cn(
-                    'h-10 text-sm pl-4 pr-10 rounded-full border border-neutral-200/60 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent transition-all duration-300 ease-out bg-white/95 backdrop-blur shadow-inner',
-                    searchOpen
-                      ? 'w-40 sm:w-56 md:w-64 opacity-100 pointer-events-auto scale-100'
-                      : 'w-0 opacity-0 pointer-events-none scale-95 p-0 border-none',
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (searchOpen) {
+              <div className="relative flex items-center">
+                <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => {
                       if (searchQuery.trim()) {
-                        router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`)
+                        setShowSearchResults(true)
                       }
-                      setSearchOpen(false)
-                    } else {
-                      setSearchOpen(true)
-                    }
-                  }}
-                  className="p-2.5 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300"
-                  aria-label="Search"
-                >
-                  <Search className="w-5 h-5" strokeWidth={1.5} />
-                </button>
-              </form>
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setSearchOpen(false)
+                        setShowSearchResults(false)
+                        searchInputRef.current?.blur()
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        setShowSearchResults(false)
+                        if (!searchQuery.trim()) {
+                          setSearchOpen(false)
+                        }
+                      }, 250)
+                    }}
+                    className={cn(
+                      'h-10 text-sm pl-4 pr-10 rounded-full border border-neutral-200/60 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent transition-all duration-300 ease-out bg-white/95 backdrop-blur shadow-inner text-neutral-900',
+                      searchOpen
+                        ? 'w-40 sm:w-56 md:w-64 opacity-100 pointer-events-auto scale-100'
+                        : 'w-0 opacity-0 pointer-events-none scale-95 p-0 border-none',
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (searchOpen) {
+                        if (searchQuery.trim()) {
+                          router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`)
+                          setShowSearchResults(false)
+                        }
+                        setSearchOpen(false)
+                      } else {
+                        setSearchOpen(true)
+                      }
+                    }}
+                    className="p-2.5 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300"
+                    aria-label="Search"
+                  >
+                    <Search className="w-5 h-5" strokeWidth={1.5} />
+                  </button>
+                </form>
+
+                {/* Live Search Preview Dropdown */}
+                {searchOpen && showSearchResults && searchQuery.trim() && (
+                  <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 md:w-96 max-w-[calc(100vw-2rem)] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-neutral-200/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    {searchLoading ? (
+                      <div className="flex items-center justify-center py-8 gap-2.5 text-honeycomb-medium text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin text-wigrix-teal" />
+                        <span>Searching products...</span>
+                      </div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="p-6 text-center text-sm text-neutral-500 font-medium">
+                        No products found for &ldquo;{searchQuery}&rdquo;
+                      </div>
+                    ) : (
+                      <div className="max-h-[320px] overflow-y-auto divide-y divide-neutral-100 no-scrollbar">
+                        <div className="px-4 py-2 border-b border-neutral-100 text-[10px] font-bold text-honeycomb-muted uppercase tracking-wider bg-neutral-50/50">
+                          Matches
+                        </div>
+                        {searchResults.map((product) => {
+                          const image = product.gallery?.[0]?.image
+                          const thumbnailUrl = typeof image === 'object' && image !== null ? image.url : null
+                          const categoryName = product.categories && Array.isArray(product.categories) && product.categories.length > 0
+                            ? (product.categories[0] as any)?.title || 'Accessory'
+                            : 'Accessory'
+
+                          let price = product.priceInUSD
+                          const variants = product.variants?.docs
+                          if (variants && variants.length > 0) {
+                            const variant = variants[0]
+                            if (variant && typeof variant === 'object' && variant?.priceInUSD && typeof variant.priceInUSD === 'number') {
+                              price = variant.priceInUSD
+                            }
+                          }
+
+                          return (
+                            <Link
+                              key={product.id}
+                              href={`/products/${product.slug}`}
+                              onClick={() => {
+                                setShowSearchResults(false)
+                                setSearchOpen(false)
+                              }}
+                              className="flex items-center gap-3.5 p-3.5 hover:bg-neutral-50/60 transition-colors"
+                            >
+                              <div className="w-12 h-12 rounded-xl bg-neutral-100 overflow-hidden relative flex-shrink-0 border border-neutral-100">
+                                {thumbnailUrl ? (
+                                  <Image
+                                    src={thumbnailUrl}
+                                    alt={product.title}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400">
+                                    No Image
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0 text-left">
+                                <span className="text-[10px] font-bold text-wigrix-teal uppercase tracking-wider block mb-0.5">
+                                  {categoryName}
+                                </span>
+                                <h4 className="text-sm font-semibold text-honeycomb-charcoal truncate">
+                                  {product.title}
+                                </h4>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                {typeof price === 'number' ? (
+                                  <span className="text-sm font-bold text-honeycomb-charcoal">
+                                    {new Intl.NumberFormat('en-IN', {
+                                      style: 'currency',
+                                      currency: 'INR',
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 0,
+                                    }).format(price)}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-neutral-400">Unavailable</span>
+                                )}
+                              </div>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Account - Desktop only */}
               <Link

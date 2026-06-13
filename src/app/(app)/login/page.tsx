@@ -20,15 +20,15 @@ export default async function Login() {
   }
 
   return (
-    <div className="container">
-      <div className="max-w-xl mx-auto my-12">
-        <RenderParams />
-
-        <h1 className="mb-4 text-[1.8rem]">Log in</h1>
-        <p className="mb-8">
-          {`This is where your customers will login to manage their account, review their order history, and more. To manage all users, `}
-          <Link href="/admin/collections/users">login to the admin dashboard</Link>.
-        </p>
+    <div className="min-h-[80vh] flex items-center justify-center bg-neutral-50 px-4 py-20">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-neutral-200/50 p-8 shadow-xl shadow-neutral-100 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-300">
+        <div className="text-center">
+          <RenderParams />
+          <h1 className="text-2xl font-black text-honeycomb-charcoal tracking-tight">Welcome Back</h1>
+          <p className="text-sm text-honeycomb-muted mt-2">
+            Log in to manage your profile and track your product interests.
+          </p>
+        </div>
         <LoginForm />
       </div>
     </div>

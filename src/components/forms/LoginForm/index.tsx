@@ -45,46 +45,61 @@ export const LoginForm: React.FC = () => {
   )
 
   return (
-    <form className="" onSubmit={handleSubmit(onSubmit)}>
-      <Message className="classes.message" error={error} />
-      <div className="flex flex-col gap-8">
-        <FormItem>
-          <Label htmlFor="email">Email</Label>
+    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <Message error={error} />
+      
+      <div className="space-y-4">
+        <FormItem className="flex flex-col gap-1.5">
+          <Label htmlFor="email" className="text-sm font-bold text-honeycomb-charcoal">Email Address</Label>
           <Input
             id="email"
             type="email"
+            placeholder="name@example.com"
+            className="bg-white text-neutral-900"
             {...register('email', { required: 'Email is required.' })}
           />
           {errors.email && <FormError message={errors.email.message} />}
         </FormItem>
 
-        <FormItem>
-          <Label htmlFor="password">Password</Label>
+        <FormItem className="flex flex-col gap-1.5">
+          <div className="flex justify-between items-center">
+            <Label htmlFor="password" className="text-sm font-bold text-honeycomb-charcoal">Password</Label>
+            <Link
+              href={`/forgot-password${allParams}`}
+              className="text-xs text-wigrix-teal hover:text-wigrix-teal/80 transition-colors font-bold"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             id="password"
             type="password"
+            placeholder="••••••••"
+            className="bg-white text-neutral-900"
             {...register('password', { required: 'Please provide a password.' })}
           />
           {errors.password && <FormError message={errors.password.message} />}
         </FormItem>
-
-        <div className="text-primary/70 mb-6 prose prose-a:hover:text-primary dark:prose-invert">
-          <p>
-            Forgot your password?{' '}
-            <Link href={`/forgot-password${allParams}`}>Click here to reset it</Link>
-          </p>
-        </div>
       </div>
 
-      <div className="flex gap-4 justify-between">
-        <Button asChild variant="outline" size="lg">
-          <Link href={`/create-account${allParams}`} className="grow max-w-[50%]">
-            Create an account
+      <div className="pt-2 flex flex-col gap-3">
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-honeycomb-charcoal text-white font-bold text-sm hover:bg-honeycomb-slate active:scale-[0.98] transition-all disabled:opacity-50 hover:cursor-pointer"
+        >
+          {isLoading ? 'Signing In...' : 'Sign In'}
+        </button>
+
+        <p className="text-xs text-center text-honeycomb-muted font-medium mt-1">
+          Don&apos;t have an account?{' '}
+          <Link
+            href={`/create-account${allParams}`}
+            className="text-wigrix-teal hover:text-wigrix-teal/80 font-bold transition-colors"
+          >
+            Sign up
           </Link>
-        </Button>
-        <Button className="grow" disabled={isLoading} size="lg" type="submit" variant="default">
-          {isLoading ? 'Processing' : 'Continue'}
-        </Button>
+        </p>
       </div>
     </form>
   )

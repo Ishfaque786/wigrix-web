@@ -2,6 +2,10 @@
 
 import React, { useState } from 'react'
 import { Star, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { FormItem } from '@/components/forms/FormItem'
 
 type Props = {
   productId: string
@@ -127,54 +131,54 @@ export default function ReviewForm({ productId, onSuccess, dialogMode = false }:
       </div>
 
       {/* Order ID Input */}
-      <div className="space-y-1.5">
-        <label htmlFor="orderId" className="block text-sm font-bold text-honeycomb-charcoal">
+      <FormItem className="flex flex-col gap-1.5">
+        <Label htmlFor="orderId" className="text-sm font-bold text-honeycomb-charcoal">
           Amazon / Flipkart Order ID
-        </label>
-        <input
+        </Label>
+        <Input
           id="orderId"
           type="text"
           value={orderId}
           onChange={(e) => setOrderId(e.target.value)}
           placeholder="e.g. 403-1234567-1234567"
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent text-sm bg-white"
+          className="bg-white text-neutral-900"
           required
         />
         <p className="text-xs text-honeycomb-muted">
           Your order ID is used only by our administrators to verify you purchased this product. It will not be shown publicly.
         </p>
-      </div>
+      </FormItem>
 
       {/* Title / Headline */}
-      <div className="space-y-1.5">
-        <label htmlFor="title" className="block text-sm font-bold text-honeycomb-charcoal">
+      <FormItem className="flex flex-col gap-1.5">
+        <Label htmlFor="title" className="text-sm font-bold text-honeycomb-charcoal">
           Review Title
-        </label>
-        <input
+        </Label>
+        <Input
           id="title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Summarize your experience"
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent text-sm bg-white"
+          className="bg-white text-neutral-900"
           required
         />
-      </div>
+      </FormItem>
 
       {/* Review Body */}
-      <div className="space-y-1.5">
-        <label htmlFor="body" className="block text-sm font-bold text-honeycomb-charcoal">
+      <FormItem className="flex flex-col gap-1.5">
+        <Label htmlFor="body" className="text-sm font-bold text-honeycomb-charcoal">
           Review Comments (Optional)
-        </label>
-        <textarea
+        </Label>
+        <Textarea
           id="body"
           rows={4}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="What did you like or dislike? How are you using the product?"
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent text-sm bg-white resize-y"
+          className="bg-white text-neutral-900 resize-y"
         />
-      </div>
+      </FormItem>
 
       <button
         type="submit"

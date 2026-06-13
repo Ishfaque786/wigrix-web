@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { ReactNode, Suspense } from 'react'
 
 import { headers as getHeaders } from 'next/headers.js'
 import configPromise from '@payload-config'
@@ -30,23 +30,17 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </p>
         </div>
 
-        {/* Mobile nav (above content) */}
-        {user && (
-          <AccountNav
-            userEmail={userEmail}
-            userName={userName}
-          />
-        )}
-
         {/* Content grid: sidebar + main */}
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">
-          {/* Sidebar — desktop only */}
+          {/* Navigation Sidebar/Top bar */}
           {user && (
-            <div className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
-              <AccountNav
-                userEmail={userEmail}
-                userName={userName}
-              />
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <Suspense fallback={<div className="h-14 lg:h-64 bg-white rounded-3xl border-2 border-neutral-100 animate-pulse" />}>
+                <AccountNav
+                  userEmail={userEmail}
+                  userName={userName}
+                />
+              </Suspense>
             </div>
           )}
 

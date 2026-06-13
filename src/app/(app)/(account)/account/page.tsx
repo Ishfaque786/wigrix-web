@@ -10,7 +10,11 @@ import { User, Eye, Star, Settings } from 'lucide-react'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { ReviewQueue } from '@/components/ReviewQueue'
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
   const headers = await getHeaders()
   const payload = await getPayload({ config: configPromise })
   const { user } = await payload.auth({ headers })
@@ -21,7 +25,13 @@ export default async function AccountPage() {
     )
   }
 
+  const resolvedSearchParams = await searchParams
+  const activeTab = resolvedSearchParams.tab || 'settings'
   const displayName = user.name?.trim() || 'there'
+
+  const showSettings = activeTab === 'settings'
+  const showRecentlyViewed = activeTab === 'recently-viewed'
+  const showReviewQueue = activeTab === 'review-queue'
 
   return (
     <>
@@ -44,48 +54,54 @@ export default async function AccountPage() {
       </div>
 
       {/* Recently Viewed section */}
-      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-wigrix-teal/10 flex items-center justify-center">
-            <Eye className="w-5 h-5 text-wigrix-teal" />
+      {showRecentlyViewed && (
+        <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-wigrix-teal/10 flex items-center justify-center">
+              <Eye className="w-5 h-5 text-wigrix-teal" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-neutral-900">Recently Viewed</h3>
+              <p className="text-xs text-neutral-400">Products you&apos;ve looked at recently</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900">Recently Viewed</h3>
-            <p className="text-xs text-neutral-400">Products you&apos;ve looked at recently</p>
-          </div>
+          <RecentlyViewed />
         </div>
-        <RecentlyViewed />
-      </div>
+      )}
 
       {/* Review Queue section */}
-      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-            <Star className="w-5 h-5 text-amber-500" />
+      {showReviewQueue && (
+        <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+              <Star className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-neutral-900">Review Queue</h3>
+              <p className="text-xs text-neutral-400">
+                Products you want to review on Amazon or Flipkart
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900">Review Queue</h3>
-            <p className="text-xs text-neutral-400">
-              Products you want to review on Amazon or Flipkart
-            </p>
-          </div>
+          <ReviewQueue />
         </div>
-        <ReviewQueue />
-      </div>
+      )}
 
       {/* Account Settings */}
-      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-neutral-500" />
+      {showSettings && (
+        <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-neutral-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-neutral-900">Account Settings</h3>
+              <p className="text-xs text-neutral-400">Update your name, email, and password</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900">Account Settings</h3>
-            <p className="text-xs text-neutral-400">Update your name, email, and password</p>
-          </div>
+          <AccountForm />
         </div>
-        <AccountForm />
-      </div>
+      )}
     </>
   )
 }

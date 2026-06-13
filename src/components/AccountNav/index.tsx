@@ -2,7 +2,7 @@
 
 import clsx from 'clsx'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { User, Eye, Star, LogOut, ChevronRight, Settings } from 'lucide-react'
 
 type Props = {
@@ -12,17 +12,17 @@ type Props = {
 }
 
 const navItems = [
-  { href: '/account', label: 'Account Settings', icon: Settings, exact: true },
-  { href: '/account/recently-viewed', label: 'Recently Viewed', icon: Eye, exact: false },
-  { href: '/account/review-queue', label: 'Review Queue', icon: Star, exact: false },
+  { href: '/account?tab=settings', label: 'Account Settings', icon: Settings, tabKey: 'settings' },
+  { href: '/account?tab=recently-viewed', label: 'Recently Viewed', icon: Eye, tabKey: 'recently-viewed' },
+  { href: '/account?tab=review-queue', label: 'Review Queue', icon: Star, tabKey: 'review-queue' },
 ]
 
 export const AccountNav: React.FC<Props> = ({ className, userEmail, userName }) => {
-  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const activeTab = searchParams.get('tab') || 'settings'
 
-  const isActive = (href: string, exact: boolean) => {
-    if (exact) return pathname === href
-    return pathname.startsWith(href)
+  const isActive = (tabKey: string) => {
+    return activeTab === tabKey
   }
 
   return (
@@ -32,13 +32,13 @@ export const AccountNav: React.FC<Props> = ({ className, userEmail, userName }) 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon
-            const active = isActive(item.href, item.exact)
+            const active = isActive(item.tabKey)
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  'flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors flex-shrink-0 text-sm font-medium',
+                  'flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors flex-shrink-0 text-sm font-medium hover:cursor-pointer',
                   active
                     ? 'bg-wigrix-teal text-white'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200',
@@ -51,7 +51,7 @@ export const AccountNav: React.FC<Props> = ({ className, userEmail, userName }) 
           })}
           <Link
             href="/logout"
-            className="flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap bg-neutral-100 text-neutral-600 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap bg-neutral-100 text-neutral-600 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0 text-sm font-medium hover:cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             Log out
@@ -83,13 +83,13 @@ export const AccountNav: React.FC<Props> = ({ className, userEmail, userName }) 
           <ul className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon
-              const active = isActive(item.href, item.exact)
+              const active = isActive(item.tabKey)
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     className={clsx(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors',
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:cursor-pointer',
                       active
                         ? 'bg-wigrix-teal/10 text-wigrix-teal'
                         : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900',
@@ -113,7 +113,7 @@ export const AccountNav: React.FC<Props> = ({ className, userEmail, userName }) 
         <div className="mt-4 pt-4 border-t border-neutral-100">
           <Link
             href="/logout"
-            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-neutral-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-neutral-600 hover:bg-red-50 hover:text-red-600 transition-colors hover:cursor-pointer"
           >
             <LogOut className="w-5 h-5" />
             <span className="text-sm font-medium">Log out</span>
