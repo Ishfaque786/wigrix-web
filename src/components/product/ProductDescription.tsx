@@ -9,7 +9,15 @@ import { ShoppingBag, Star, Shield, Truck, Package } from 'lucide-react'
 
 import { VariantSelector } from './VariantSelector'
 
-export function ProductDescription({ product }: { product: Product }) {
+export function ProductDescription({ 
+  product,
+  averageRating = 0,
+  reviewCount = 0
+}: { 
+  product: Product
+  averageRating?: number
+  reviewCount?: number
+}) {
   let amount = 0,
     lowestAmount = 0,
     highestAmount = 0
@@ -50,18 +58,39 @@ export function ProductDescription({ product }: { product: Product }) {
     { icon: Shield, label: 'Secure Payment', desc: '100% protected' },
   ]
 
+  const renderStars = (rating: number) => {
+    return [1, 2, 3, 4, 5].map((i) => {
+      const fillPercent = Math.min(Math.max(rating - (i - 1), 0), 1) * 100
+      return (
+        <div key={i} className="relative w-4 h-4">
+          <Star className="absolute inset-0 w-4 h-4 text-neutral-300" />
+          {fillPercent > 0 && (
+            <div
+              className="absolute inset-0 overflow-hidden"
+              style={{ width: `${fillPercent}%` }}
+            >
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+            </div>
+          )}
+        </div>
+      )
+    })
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Title & Price */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold text-honeycomb-charcoal tracking-tight">{product.title}</h1>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            {[1,2,3,4,5].map((i) => (
-              <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-            ))}
+          <div className="flex items-center gap-0.5">
+            {renderStars(averageRating)}
           </div>
-          <span className="text-sm text-honeycomb-muted">(4.9 · 128 reviews)</span>
+          <span className="text-sm text-honeycomb-muted">
+            {reviewCount > 0
+              ? `(${averageRating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'})`
+              : '(No reviews yet)'}
+          </span>
         </div>
         <div className="text-3xl font-bold text-honeycomb-charcoal mt-1">
           {hasVariants ? (

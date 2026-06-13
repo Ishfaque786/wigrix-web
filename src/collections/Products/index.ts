@@ -226,6 +226,32 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
       hasMany: true,
       relationTo: 'categories',
     },
+    {
+      name: 'reviews',
+      type: 'join',
+      collection: 'reviews',
+      on: 'product',
+      admin: {
+        allowCreate: false,
+        defaultColumns: ['userName', 'rating', 'status', 'createdAt'],
+      },
+    },
+    {
+      name: 'ratingAverage',
+      type: 'number',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'ratingCount',
+      type: 'number',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
+    },
     slugField(),
   ],
 })

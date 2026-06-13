@@ -149,8 +149,8 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       ? (product.categories[0] as any)?.title || 'Accessory'
       : 'Accessory'
 
-  // Deterministic rating
-  const rating = (4.5 + ((product.title?.charCodeAt(0) || 0) % 5) / 10).toFixed(1)
+  const avgRating = product.ratingAverage ?? 0
+  const countReviews = product.ratingCount ?? 0
 
   // Show countdown for first product
   const showCountdown = index === 0
@@ -227,7 +227,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             <span className="text-xs text-honeycomb-muted font-medium">{categoryName}</span>
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-semibold text-honeycomb-charcoal">{rating}</span>
+              <span className="text-xs font-semibold text-honeycomb-charcoal">
+                {countReviews > 0 ? avgRating.toFixed(1) : 'New'}
+              </span>
             </div>
           </div>
 

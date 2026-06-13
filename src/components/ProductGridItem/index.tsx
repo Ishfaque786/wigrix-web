@@ -43,8 +43,8 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
     ? (product.categories[0] as any)?.title || 'Accessory'
     : 'Accessory'
 
-  // Deterministic rating from product id
-  const rating = (4.5 + ((title?.charCodeAt(0) || 0) % 5) / 10).toFixed(1)
+  const avgRating = product.ratingAverage ?? 0
+  const countReviews = product.ratingCount ?? 0
 
   const firstExternalLink = externalLinks && externalLinks.length > 0 ? externalLinks[0] : null
 
@@ -78,7 +78,9 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
             </span>
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-semibold text-honeycomb-charcoal">{rating}</span>
+              <span className="text-xs font-semibold text-honeycomb-charcoal">
+                {countReviews > 0 ? avgRating.toFixed(1) : 'New'}
+              </span>
             </div>
           </div>
 

@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import React, { Suspense, useState, useEffect, useRef } from 'react'
 import { Search, User, Menu, X, ArrowRight, LayoutGrid, ChevronDown } from 'lucide-react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { cn } from '@/utilities/cn'
 import { LogoIcon } from '@/components/icons/logo'
 import type { Header } from 'src/payload-types'
@@ -29,8 +29,36 @@ function HeaderClientInner({ header, categories = [] }: Props) {
   const [catOpen, setCatOpen] = useState(false)
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const activeCategory = searchParams.get('category') ?? ''
   const catRef = useRef<HTMLDivElement>(null)
+
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '')
+    if (searchParams.get('q')) {
+      setSearchOpen(true)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [searchOpen])
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`)
+    } else {
+      router.push('/shop')
+    }
+    setSearchOpen(false)
+  }
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
@@ -185,13 +213,52 @@ function HeaderClientInner({ header, categories = [] }: Props) {
 
             {/* Right: Icons */}
             <div className="flex items-center gap-1">
-              {/* Search */}
-              <button
-                className="p-2.5 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5" strokeWidth={1.5} />
-              </button>
+              {/* Search Bar Container */}
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setSearchOpen(false)
+                      searchInputRef.current?.blur()
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      if (!searchQuery.trim()) {
+                        setSearchOpen(false)
+                      }
+                    }, 200)
+                  }}
+                  className={cn(
+                    'h-10 text-sm pl-4 pr-10 rounded-full border border-neutral-200/60 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent transition-all duration-300 ease-out bg-white/95 backdrop-blur shadow-inner',
+                    searchOpen
+                      ? 'w-40 sm:w-56 md:w-64 opacity-100 pointer-events-auto scale-100'
+                      : 'w-0 opacity-0 pointer-events-none scale-95 p-0 border-none',
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (searchOpen) {
+                      if (searchQuery.trim()) {
+                        router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`)
+                      }
+                      setSearchOpen(false)
+                    } else {
+                      setSearchOpen(true)
+                    }
+                  }}
+                  className="p-2.5 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300"
+                  aria-label="Search"
+                >
+                  <Search className="w-5 h-5" strokeWidth={1.5} />
+                </button>
+              </form>
 
               {/* Account - Desktop only */}
               <Link

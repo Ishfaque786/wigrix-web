@@ -76,6 +76,7 @@ export interface Config {
     pages: Page;
     categories: Category;
     media: Media;
+    reviews: Review;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -102,6 +103,7 @@ export interface Config {
     };
     products: {
       variants: 'variants';
+      reviews: 'reviews';
     };
   };
   collectionsSelect: {
@@ -109,6 +111,7 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -316,6 +319,13 @@ export interface Product {
     description?: string | null;
   };
   categories?: (string | Category)[] | null;
+  reviews?: {
+    docs?: (string | Review)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  ratingAverage?: number | null;
+  ratingCount?: number | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -903,6 +913,29 @@ export interface Variant {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: string;
+  product: string | Product;
+  user?: (string | null) | User;
+  userName?: string | null;
+  /**
+   * The order number from Amazon or Flipkart for verification
+   */
+  orderId: string;
+  /**
+   * 1 = Worst, 5 = Best
+   */
+  rating: number;
+  title: string;
+  body?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "transactions".
  */
 export interface Transaction {
@@ -1083,6 +1116,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: string | Review;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1397,6 +1434,22 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  product?: T;
+  user?: T;
+  userName?: T;
+  orderId?: T;
+  rating?: T;
+  title?: T;
+  body?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -1648,6 +1701,9 @@ export interface ProductsSelect<T extends boolean = true> {
         description?: T;
       };
   categories?: T;
+  reviews?: T;
+  ratingAverage?: T;
+  ratingCount?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;

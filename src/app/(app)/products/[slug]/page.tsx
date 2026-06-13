@@ -1,11 +1,11 @@
-import type { Media, Product } from '@/payload-types'
+import type { Media, Product, Review } from '@/payload-types'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import { draftMode } from 'next/headers'
+import { draftMode, headers as getHeaders } from 'next/headers'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
@@ -14,6 +14,7 @@ import { ChevronRight, Star, Package, Truck, Shield, ArrowLeft } from 'lucide-re
 import { Metadata } from 'next'
 import { TrackView } from '@/components/TrackView'
 import { AddToReviewQueueButton } from '@/components/ReviewQueue'
+import ReviewSection from '@/components/product/ReviewSection'
 
 type Args = {
   params: Promise<{
@@ -60,6 +61,37 @@ export default async function ProductPage({ params }: Args) {
   const product = await queryProductBySlug({ slug })
 
   if (!product) return notFound()
+
+  const headers = await getHeaders()
+  const payload = await getPayload({ config: configPromise })
+  const { user } = await payload.auth({ headers })
+
+  // Fetch reviews (approved reviews + user's own reviews if logged in)
+  const reviewsResult = await payload.find({
+    collection: 'reviews',
+    where: {
+      and: [
+        { product: { equals: product.id } },
+        user
+          ? {
+              or: [
+                { status: { equals: 'approved' } },
+                { user: { equals: user.id } },
+              ],
+            }
+          : { status: { equals: 'approved' } },
+      ],
+    },
+    overrideAccess: true,
+    limit: 100,
+    sort: '-createdAt',
+  })
+  
+  const reviews = (reviewsResult.docs || []) as unknown as Review[]
+  const approvedReviews = reviews.filter((r) => r.status === 'approved')
+  const reviewCount = approvedReviews.length
+  const averageRating =
+    reviewCount > 0 ? approvedReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : 0
 
   const gallery =
     product.gallery
@@ -181,7 +213,11 @@ export default async function ProductPage({ params }: Args) {
 
             {/* Description */}
             <div className="basis-full lg:basis-1/2">
-              <ProductDescription product={product} />
+              <ProductDescription
+                product={product}
+                averageRating={averageRating}
+                reviewCount={reviewCount}
+              />
               {/* Review Queue button */}
               <div className="mt-4">
                 <AddToReviewQueueButton
@@ -199,6 +235,9 @@ export default async function ProductPage({ params }: Args) {
               </div>
             </div>
           </div>
+
+          {/* Customer Reviews Section */}
+          <ReviewSection productId={product.id} reviews={reviews} userId={user?.id ?? null} />
         </div>
 
         {/* Content Blocks */}
