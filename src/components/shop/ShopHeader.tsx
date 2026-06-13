@@ -17,8 +17,8 @@ import {
 const sortOptions = [
   { label: 'A → Z', value: 'title' },
   { label: 'Z → A', value: '-title' },
-  { label: 'Price: Low → High', value: 'priceInUSD' },
-  { label: 'Price: High → Low', value: '-priceInUSD' },
+  { label: 'Price: Low → High', value: 'priceInINR' },
+  { label: 'Price: High → Low', value: '-priceInINR' },
   { label: 'Newest First', value: '-createdAt' },
 ]
 

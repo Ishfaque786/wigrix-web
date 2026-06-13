@@ -257,7 +257,7 @@ export interface Order {
   transactions?: (string | Transaction)[] | null;
   status?: OrderStatus;
   amount?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'INR' | null;
   accessToken?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -300,8 +300,8 @@ export interface Product {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  priceInUSDEnabled?: boolean | null;
-  priceInUSD?: number | null;
+  priceInINREnabled?: boolean | null;
+  priceInINR?: number | null;
   relatedProducts?: (string | Product)[] | null;
   externalLinks?:
     | {
@@ -904,8 +904,8 @@ export interface Variant {
   product: string | Product;
   options: (string | VariantOption)[];
   inventory?: number | null;
-  priceInUSDEnabled?: boolean | null;
-  priceInUSD?: number | null;
+  priceInINREnabled?: boolean | null;
+  priceInINR?: number | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -972,7 +972,7 @@ export interface Transaction {
   order?: (string | null) | Order;
   cart?: (string | null) | Cart;
   amount?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'INR' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -995,7 +995,7 @@ export interface Cart {
   purchasedAt?: string | null;
   status?: ('active' | 'purchased' | 'abandoned') | null;
   subtotal?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'INR' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1626,8 +1626,8 @@ export interface VariantsSelect<T extends boolean = true> {
   product?: T;
   options?: T;
   inventory?: T;
-  priceInUSDEnabled?: T;
-  priceInUSD?: T;
+  priceInINREnabled?: T;
+  priceInINR?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -1683,8 +1683,8 @@ export interface ProductsSelect<T extends boolean = true> {
   enableVariants?: T;
   variantTypes?: T;
   variants?: T;
-  priceInUSDEnabled?: T;
-  priceInUSD?: T;
+  priceInINREnabled?: T;
+  priceInINR?: T;
   relatedProducts?: T;
   externalLinks?:
     | T

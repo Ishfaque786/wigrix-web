@@ -107,11 +107,11 @@ export default async function ProductPage({ params }: Args) {
       })
     : product.inventory! > 0
 
-  let price = product.priceInUSD
+  let price = product.priceInINR
   if (product.enableVariants && product?.variants?.docs?.length) {
     price = product?.variants?.docs?.reduce((acc, variant) => {
-      if (typeof variant === 'object' && variant?.priceInUSD && acc && variant?.priceInUSD > acc) {
-        return variant.priceInUSD
+      if (typeof variant === 'object' && variant?.priceInINR && acc && variant?.priceInINR > acc) {
+        return variant.priceInINR
       }
       return acc
     }, price)
@@ -162,7 +162,7 @@ export default async function ProductPage({ params }: Args) {
           id: product.id,
           slug: product.slug!,
           title: product.title,
-          priceInUSD: price ?? null,
+          priceInINR: price ?? null,
           imageUrl: firstImage?.url ?? null,
           categoryName,
           externalLinks: product.externalLinks?.map((l) => ({ url: l.url, label: l.label })),
@@ -254,13 +254,13 @@ function RelatedProducts({ products }: { products: Product[] }) {
           const firstImage = gallery[0]?.image as Media
           const thumbnailUrl = firstImage?.url || null
           const priceFormatted =
-            typeof product.priceInUSD === 'number'
+            typeof product.priceInINR === 'number'
               ? new Intl.NumberFormat('en-IN', {
                   style: 'currency',
                   currency: 'INR',
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
-                }).format(product.priceInUSD)
+                }).format(product.priceInINR)
               : null
 
           return (
@@ -321,7 +321,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
     populate: {
       variants: {
         title: true,
-        priceInUSD: true,
+        priceInINR: true,
         inventory: true,
         options: true,
       },

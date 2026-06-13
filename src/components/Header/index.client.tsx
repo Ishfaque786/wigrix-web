@@ -353,12 +353,12 @@ function HeaderClientInner({ header, categories = [] }: Props) {
                             ? (product.categories[0] as any)?.title || 'Accessory'
                             : 'Accessory'
 
-                          let price = product.priceInUSD
+                          let price = product.priceInINR
                           const variants = product.variants?.docs
                           if (variants && variants.length > 0) {
                             const variant = variants[0]
-                            if (variant && typeof variant === 'object' && variant?.priceInUSD && typeof variant.priceInUSD === 'number') {
-                              price = variant.priceInUSD
+                            if (variant && typeof variant === 'object' && variant?.priceInINR && typeof variant.priceInINR === 'number') {
+                              price = variant.priceInINR
                             }
                           }
 

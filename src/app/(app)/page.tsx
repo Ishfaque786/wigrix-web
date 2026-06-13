@@ -139,13 +139,13 @@ export default async function Home() {
 
   // Format spotlight price
   const spotlightPrice =
-    spinningOrganizer && typeof spinningOrganizer.priceInUSD === 'number'
+    spinningOrganizer && typeof spinningOrganizer.priceInINR === 'number'
       ? new Intl.NumberFormat('en-IN', {
           style: 'currency',
           currency: 'INR',
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
-        }).format(spinningOrganizer.priceInUSD)
+        }).format(spinningOrganizer.priceInINR)
       : '₹949'
 
 

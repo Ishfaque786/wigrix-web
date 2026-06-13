@@ -23,14 +23,14 @@ function formatINR(amount: number): string {
 }
 
 export const ProductGridItem: React.FC<Props> = ({ product }) => {
-  const { gallery, priceInUSD, title, slug, externalLinks } = product
+  const { gallery, priceInINR, title, slug, externalLinks } = product
 
-  let price = priceInUSD
+  let price = priceInINR
   const variants = product.variants?.docs
   if (variants && variants.length > 0) {
     const variant = variants[0]
-    if (variant && typeof variant === 'object' && variant?.priceInUSD && typeof variant.priceInUSD === 'number') {
-      price = variant.priceInUSD
+    if (variant && typeof variant === 'object' && variant?.priceInINR && typeof variant.priceInINR === 'number') {
+      price = variant.priceInINR
     }
   }
 

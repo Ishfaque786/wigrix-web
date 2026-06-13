@@ -18,7 +18,7 @@ type Props = {
     id: string | number
     slug: string
     title: string
-    priceInUSD?: number | null
+    priceInINR?: number | null
     imageUrl?: string | null
     categoryName?: string
     externalLinks?: { url: string; label?: string | null }[]
@@ -41,7 +41,7 @@ export function TrackView({ product }: Props) {
         id: product.id,
         slug: product.slug,
         title: product.title,
-        price: product.priceInUSD ?? null,
+        price: product.priceInINR ?? null,
         imageUrl: product.imageUrl ?? null,
         categoryName: product.categoryName ?? 'Product',
         externalLinks: product.externalLinks,

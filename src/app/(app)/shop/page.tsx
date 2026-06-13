@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 type SearchParams = { [key: string]: string | string[] | undefined }
 type Props = { searchParams: Promise<SearchParams> }
 
-const VALID_SORTS = ['title', '-title', 'priceInUSD', '-priceInUSD', '-createdAt']
+const VALID_SORTS = ['title', '-title', 'priceInINR', '-priceInINR', '-createdAt']
 const DEFAULT_SORT = 'title'
 
 export default async function ShopPage({ searchParams }: Props) {
@@ -57,7 +57,7 @@ export default async function ShopPage({ searchParams }: Props) {
       slug: true,
       gallery: true,
       categories: true,
-      priceInUSD: true,
+      priceInINR: true,
       externalLinks: true,
     },
     where: { and: andClauses },

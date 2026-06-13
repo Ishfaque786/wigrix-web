@@ -27,7 +27,7 @@ function formatINR(amount: number): string {
 }
 
 function getProductPrice(product: Product) {
-  const amount = product.priceInUSD
+  const amount = product.priceInINR
   if (typeof amount !== 'number') return null
   return { formatted: formatINR(amount), amount }
 }

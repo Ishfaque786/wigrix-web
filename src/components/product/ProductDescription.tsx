@@ -30,26 +30,26 @@ export function ProductDescription({
         if (
           typeof a === 'object' &&
           typeof b === 'object' &&
-          'priceInUSD' in a &&
-          'priceInUSD' in b &&
-          typeof a.priceInUSD === 'number' &&
-          typeof b.priceInUSD === 'number'
+          'priceInINR' in a &&
+          'priceInINR' in b &&
+          typeof a.priceInINR === 'number' &&
+          typeof b.priceInINR === 'number'
         ) {
-          return a.priceInUSD - b.priceInUSD
+          return a.priceInINR - b.priceInINR
         }
         return 0
       }) as Variant[]
 
     if (variantsOrderedByPrice?.length) {
-      const lowestVariant = variantsOrderedByPrice[0]?.priceInUSD
-      const highestVariant = variantsOrderedByPrice[variantsOrderedByPrice.length - 1]?.priceInUSD
+      const lowestVariant = variantsOrderedByPrice[0]?.priceInINR
+      const highestVariant = variantsOrderedByPrice[variantsOrderedByPrice.length - 1]?.priceInINR
       if (typeof lowestVariant === 'number' && typeof highestVariant === 'number') {
         lowestAmount = lowestVariant
         highestAmount = highestVariant
       }
     }
-  } else if (product.priceInUSD && typeof product.priceInUSD === 'number') {
-    amount = product.priceInUSD
+  } else if (product.priceInINR && typeof product.priceInINR === 'number') {
+    amount = product.priceInINR
   }
 
   const trustBadges = [
