@@ -23,7 +23,15 @@ export const Video: React.FC<MediaProps> = (props) => {
 
   if (resource && typeof resource === 'object') {
     const { filename, url } = resource
-    const videoSrc = url || `/media/${filename}`
+
+    const isLocalhost =
+      process.env.NODE_ENV === 'development' ||
+      process.env.NEXT_PUBLIC_SERVER_URL?.includes('localhost') ||
+      process.env.NEXT_PUBLIC_SERVER_URL?.includes('127.0.0.1')
+
+    const videoSrc = isLocalhost
+      ? (url || `/media/${filename}`)
+      : `${process.env.NEXT_PUBLIC_SERVER_URL}${url || `/media/${filename}`}`
 
     return (
       <video

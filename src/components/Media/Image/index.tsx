@@ -49,7 +49,12 @@ export const Image: React.FC<MediaProps> = (props) => {
 
     const filename = fullFilename
 
-    src = url || ''
+    const isLocalhost =
+      process.env.NODE_ENV === 'development' ||
+      process.env.NEXT_PUBLIC_SERVER_URL?.includes('localhost') ||
+      process.env.NEXT_PUBLIC_SERVER_URL?.includes('127.0.0.1')
+
+    src = url ? (isLocalhost ? url : `${process.env.NEXT_PUBLIC_SERVER_URL}${url}`) : ''
   }
 
   // NOTE: this is used by the browser to determine which image to download at different screen sizes
