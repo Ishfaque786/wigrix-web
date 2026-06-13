@@ -13,6 +13,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 type FormData = {
+  name: string
   email: string
   password: string
   passwordConfirm: string
@@ -59,7 +60,7 @@ export const CreateAccountForm: React.FC = () => {
       }, 1000)
 
       try {
-        await login(data)
+        await login({ email: data.email, password: data.password })
         clearTimeout(timer)
         if (redirect) router.push(redirect)
         else router.push(`/account?success=${encodeURIComponent('Account created successfully')}`)
@@ -76,6 +77,20 @@ export const CreateAccountForm: React.FC = () => {
       <Message error={error} />
 
       <div className="space-y-4">
+        <FormItem className="flex flex-col gap-1.5">
+          <Label htmlFor="name" className="text-sm font-bold text-honeycomb-charcoal">
+            Full Name
+          </Label>
+          <Input
+            id="name"
+            placeholder="John Doe"
+            className="bg-white text-neutral-900"
+            {...register('name', { required: 'Name is required.' })}
+            type="text"
+          />
+          {errors.name && <FormError message={errors.name.message} />}
+        </FormItem>
+
         <FormItem className="flex flex-col gap-1.5">
           <Label htmlFor="email" className="text-sm font-bold text-honeycomb-charcoal">
             Email Address

@@ -13,7 +13,6 @@ import React, { Suspense } from 'react'
 import { ChevronRight, Star, Package, Truck, Shield, ArrowLeft } from 'lucide-react'
 import { Metadata } from 'next'
 import { TrackView } from '@/components/TrackView'
-import { AddToReviewQueueButton } from '@/components/ReviewQueue'
 import ReviewSection from '@/components/product/ReviewSection'
 
 type Args = {
@@ -218,21 +217,6 @@ export default async function ProductPage({ params }: Args) {
                 averageRating={averageRating}
                 reviewCount={reviewCount}
               />
-              {/* Review Queue button */}
-              <div className="mt-4">
-                <AddToReviewQueueButton
-                  product={{
-                    id: product.id,
-                    slug: product.slug!,
-                    title: product.title,
-                    price: price ?? null,
-                    imageUrl: firstImage?.url ?? null,
-                    categoryName,
-                    externalLinks: product.externalLinks?.map((l) => ({ url: l.url, label: l.label })),
-                    addedAt: 0,
-                  }}
-                />
-              </div>
             </div>
           </div>
 

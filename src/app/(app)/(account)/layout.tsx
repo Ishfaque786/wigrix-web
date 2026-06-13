@@ -17,7 +17,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const userEmail = user?.email || null
 
   return (
-    <div className="min-h-screen bg-neutral-50 pt-20 pb-16">
+    <div className="min-h-screen bg-transparent pt-20 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page header */}
         <div className="mb-8">
@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {/* Navigation Sidebar/Top bar */}
           {user && (
             <div className="lg:sticky lg:top-24 lg:self-start">
-              <Suspense fallback={<div className="h-14 lg:h-64 bg-white rounded-3xl border-2 border-neutral-100 animate-pulse" />}>
+              <Suspense fallback={<div className="h-14 lg:h-64 bg-white rounded-3xl border-2 border-honeycomb-cream/25 animate-pulse" />}>
                 <AccountNav
                   userEmail={userEmail}
                   userName={userName}
@@ -49,11 +49,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </div>
 
         {/* Help section */}
-        <div className="mt-12 bg-white rounded-3xl border-2 border-neutral-100 p-6 lg:p-8 shadow-sm">
+        <div className="mt-12 bg-white rounded-3xl border-2 border-honeycomb-cream/25 p-6 lg:p-8 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-wigrix-teal/10 flex items-center justify-center flex-shrink-0">
-                <HelpCircle className="w-6 h-6 text-wigrix-teal" />
+              <div className="w-12 h-12 rounded-2xl bg-honeycomb-cream/15 flex items-center justify-center flex-shrink-0">
+                <HelpCircle className="w-6 h-6 text-honeycomb-cream" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-neutral-900">Need Help?</h3>
@@ -64,7 +64,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </div>
             <Link
               href="/shop"
-              className="flex items-center gap-2 px-5 py-2.5 bg-wigrix-teal/10 text-wigrix-teal font-bold text-sm rounded-full hover:bg-wigrix-teal hover:text-white transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 px-5 py-2.5 bg-honeycomb-cream/15 text-honeycomb-cream hover:bg-honeycomb-cream hover:text-honeycomb-charcoal font-bold text-sm rounded-full transition-colors whitespace-nowrap"
             >
               Browse Products
               <ArrowRight className="w-4 h-4" />

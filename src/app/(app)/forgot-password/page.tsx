@@ -7,8 +7,8 @@ import { ForgotPasswordForm } from '@/components/forms/ForgotPasswordForm'
 
 export default async function ForgotPasswordPage() {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-neutral-50 px-4 py-20">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-neutral-200/50 p-8 shadow-xl shadow-neutral-100 animate-in fade-in zoom-in-95 duration-300">
+    <div className="min-h-[80vh] flex items-center justify-center bg-transparent px-4 py-20">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-wigrix-teal/15 p-8 shadow-xl shadow-wigrix-teal/5 animate-in fade-in zoom-in-95 duration-300">
         <ForgotPasswordForm />
       </div>
     </div>

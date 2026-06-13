@@ -1,12 +1,13 @@
 'use client'
 import Link from 'next/link'
 import React, { Suspense, useState, useEffect, useRef } from 'react'
-import { Search, User, Menu, X, ArrowRight, LayoutGrid, ChevronDown, Loader2 } from 'lucide-react'
+import { Search, User, Menu, X, ArrowRight, LayoutGrid, ChevronDown, Loader2, Settings, LogOut } from 'lucide-react'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { cn } from '@/utilities/cn'
 import { LogoIcon } from '@/components/icons/logo'
 import type { Header } from 'src/payload-types'
+import { useAuth } from '@/providers/Auth'
 
 type Category = {
   title: string
@@ -18,13 +19,25 @@ type Props = {
   categories?: Category[]
 }
 
-const staticNavLinks = [
+const navLinksBefore = [
   { name: 'Home', href: '/' },
   { name: 'Shop', href: '/shop' },
+]
+
+const navLinksAfter = [
   { name: 'About', href: '/about' },
 ]
 
 function HeaderClientInner({ header, categories = [] }: Props) {
+  const { user } = useAuth()
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return '?'
+    const parts = name.trim().split(' ')
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [catOpen, setCatOpen] = useState(false)
@@ -118,8 +131,6 @@ function HeaderClientInner({ header, categories = [] }: Props) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const navLinks = staticNavLinks
-
   return (
     <>
       <header
@@ -142,7 +153,7 @@ function HeaderClientInner({ header, categories = [] }: Props) {
             {/* Center: Desktop Navigation pill */}
             <div className="hidden lg:flex items-center">
               <div className="flex items-center bg-ikstudio-beige/40 rounded-full px-1.5 py-1.5 backdrop-blur-sm border border-white/30">
-                {navLinks.map((link) => {
+                {navLinksBefore.map((link) => {
                   const isActive =
                     link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
                   return (
@@ -168,19 +179,14 @@ function HeaderClientInner({ header, categories = [] }: Props) {
                       onClick={() => setCatOpen((v) => !v)}
                       className={cn(
                         'flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ease-out',
-                        catOpen || activeCategory
+                        catOpen
                           ? 'bg-white text-honeycomb-charcoal shadow-sm border border-honeycomb-cream/20'
                           : 'text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-white/50',
                       )}
                       aria-expanded={catOpen}
                       aria-haspopup="true"
                     >
-                      <LayoutGrid
-                        className={cn(
-                          'w-3.5 h-3.5 transition-colors',
-                          activeCategory ? 'text-wigrix-teal' : '',
-                        )}
-                      />
+                      <LayoutGrid className="w-3.5 h-3.5" />
                       Categories
                       <ChevronDown
                         className={cn(
@@ -243,14 +249,33 @@ function HeaderClientInner({ header, categories = [] }: Props) {
                     )}
                   </div>
                 )}
+
+                {navLinksAfter.map((link) => {
+                  const isActive =
+                    link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      className={cn(
+                        'relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ease-out',
+                        isActive
+                          ? 'bg-white text-honeycomb-charcoal shadow-sm border border-honeycomb-cream/20'
+                          : 'text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-white/50',
+                      )}
+                    >
+                      {link.name}
+                    </Link>
+                  )
+                })}
               </div>
             </div>
 
             {/* Right: Icons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
               {/* Search Bar Container */}
               <div className="relative flex items-center">
-                <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+                <form onSubmit={handleSearchSubmit} className="relative flex items-center gap-1.5">
                   <input
                     ref={searchInputRef}
                     type="text"
@@ -278,10 +303,10 @@ function HeaderClientInner({ header, categories = [] }: Props) {
                       }, 250)
                     }}
                     className={cn(
-                      'h-10 text-sm pl-4 pr-10 rounded-full border border-neutral-200/60 focus:outline-none focus:ring-2 focus:ring-wigrix-teal focus:border-transparent transition-all duration-300 ease-out bg-white/95 backdrop-blur shadow-inner text-neutral-900',
+                      'h-10 text-xs font-semibold pl-4 pr-4 rounded-full border border-neutral-200/60 transition-all duration-300 ease-out bg-white/95 backdrop-blur shadow-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-wigrix-teal/20 focus:border-wigrix-teal focus-visible:ring-2 focus-visible:ring-wigrix-teal/20 focus-visible:border-wigrix-teal focus-visible:ring-offset-0',
                       searchOpen
                         ? 'w-40 sm:w-56 md:w-64 opacity-100 pointer-events-auto scale-100'
-                        : 'w-0 opacity-0 pointer-events-none scale-95 p-0 border-none',
+                        : 'w-0 opacity-0 pointer-events-none scale-95 p-0 border-none'
                     )}
                   />
                   <button
@@ -297,7 +322,7 @@ function HeaderClientInner({ header, categories = [] }: Props) {
                         setSearchOpen(true)
                       }
                     }}
-                    className="p-2.5 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300"
+                    className="w-10 h-10 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300 flex items-center justify-center hover:cursor-pointer flex-shrink-0"
                     aria-label="Search"
                   >
                     <Search className="w-5 h-5" strokeWidth={1.5} />
@@ -393,13 +418,60 @@ function HeaderClientInner({ header, categories = [] }: Props) {
               </div>
 
               {/* Account - Desktop only */}
-              <Link
-                href="/account"
-                className="hidden sm:flex p-2.5 rounded-full text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-ikstudio-beige/50 transition-all duration-300"
-                aria-label="Account"
-              >
-                <User className="w-5 h-5" strokeWidth={1.5} />
-              </Link>
+              {user ? (
+                <div className="relative group hidden sm:flex items-center">
+                  <Link
+                    href="/account"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-honeycomb-cream text-honeycomb-charcoal font-extrabold text-xs shadow-md border-2 border-white hover:border-honeycomb-cream hover:scale-105 transition-all duration-300"
+                    aria-label="Account"
+                  >
+                    {getInitials(user.name)}
+                  </Link>
+
+                  {/* Hover Card */}
+                  <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out z-50 pointer-events-none group-hover:pointer-events-auto">
+                    <div className="w-64 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-honeycomb-cream/25 p-4 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 ease-out">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-honeycomb-cream/15 flex items-center justify-center font-extrabold text-sm text-honeycomb-cream">
+                          {getInitials(user.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-honeycomb-charcoal truncate">
+                            {user.name || 'Wigrix User'}
+                          </p>
+                          <p className="text-xs text-honeycomb-muted truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t border-honeycomb-cream/20 flex flex-col gap-1.5">
+                        <Link
+                          href="/account?tab=settings"
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-bold text-honeycomb-charcoal/80 hover:bg-honeycomb-cream/10 hover:text-honeycomb-charcoal transition-colors"
+                        >
+                          <Settings className="w-3.5 h-3.5" />
+                          Account Settings
+                        </Link>
+                        <Link
+                          href="/logout"
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          Log out
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="hidden sm:flex items-center gap-1.5 px-4.5 py-2 rounded-full border border-neutral-200/80 bg-white/70 hover:bg-white text-neutral-700 hover:text-neutral-900 font-extrabold text-xs shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                  aria-label="Log In"
+                >
+                  <User className="w-3.5 h-3.5 text-neutral-500" strokeWidth={2.5} />
+                  <span>Log In</span>
+                </Link>
+              )}
 
               {/* Mobile Menu Trigger */}
               <button
@@ -440,7 +512,7 @@ function HeaderClientInner({ header, categories = [] }: Props) {
             {/* Nav Links */}
             <div className="flex-1 px-8 overflow-y-auto">
               <div className="space-y-1">
-                {navLinks.map((link) => {
+                {navLinksBefore.map((link) => {
                   const isActive =
                     link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
                   return (
@@ -495,17 +567,73 @@ function HeaderClientInner({ header, categories = [] }: Props) {
                     </div>
                   </div>
                 )}
+
+                {navLinksAfter.map((link) => {
+                  const isActive =
+                    link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      className={cn(
+                        'group flex items-center justify-between py-4 border-b border-neutral-100 text-lg font-medium transition-all duration-300',
+                        isActive
+                          ? 'text-honeycomb-charcoal'
+                          : 'text-honeycomb-medium hover:text-honeycomb-charcoal',
+                      )}
+                    >
+                      <span>{link.name}</span>
+                      <ArrowRight
+                        className={cn(
+                          'w-5 h-5 transition-all duration-300',
+                          isActive
+                            ? 'text-honeycomb-charcoal'
+                            : 'text-neutral-300 group-hover:text-honeycomb-charcoal group-hover:translate-x-1',
+                        )}
+                      />
+                    </Link>
+                  )
+                })}
               </div>
 
               {/* Account link */}
               <div className="mt-8 pt-8 border-t border-neutral-200 space-y-4">
-                <Link
-                  href="/account"
-                  className="flex items-center gap-3 text-honeycomb-medium hover:text-honeycomb-charcoal transition-colors"
-                >
-                  <User className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="text-base">Account</span>
-                </Link>
+                {user ? (
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-honeycomb-cream/5 border border-honeycomb-cream/20 hover:bg-honeycomb-cream/15 hover:border-honeycomb-cream/35 transition-all duration-300"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-honeycomb-cream text-honeycomb-charcoal flex items-center justify-center font-bold text-sm shadow-sm border border-white/20">
+                        {getInitials(user.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-honeycomb-charcoal truncate">
+                          {user.name || 'Wigrix User'}
+                        </p>
+                        <p className="text-xs text-honeycomb-muted truncate">{user.email}</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/logout"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-red-600 font-bold text-sm hover:bg-red-50 rounded-xl transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Log out
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href="/account"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 text-honeycomb-medium hover:text-honeycomb-charcoal transition-colors"
+                  >
+                    <User className="w-5 h-5" strokeWidth={1.5} />
+                    <span className="text-base">Account</span>
+                  </Link>
+                )}
               </div>
             </div>
 
