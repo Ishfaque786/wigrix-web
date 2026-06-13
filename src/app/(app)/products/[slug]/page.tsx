@@ -12,6 +12,8 @@ import { notFound } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { ChevronRight, Star, Package, Truck, Shield, ArrowLeft } from 'lucide-react'
 import { Metadata } from 'next'
+import { TrackView } from '@/components/TrackView'
+import { AddToReviewQueueButton } from '@/components/ReviewQueue'
 
 type Args = {
   params: Promise<{
@@ -112,11 +114,28 @@ export default async function ProductPage({ params }: Args) {
   const relatedProducts =
     product.relatedProducts?.filter((relatedProduct) => typeof relatedProduct === 'object') ?? []
 
+  // Data for tracking
+  const firstImage = gallery[0]?.image as Media | undefined
+  const firstExternalLink = product.externalLinks?.[0]
+
   return (
     <React.Fragment>
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
         type="application/ld+json"
+      />
+
+      {/* Track this product view in localStorage */}
+      <TrackView
+        product={{
+          id: product.id,
+          slug: product.slug!,
+          title: product.title,
+          priceInUSD: price ?? null,
+          imageUrl: firstImage?.url ?? null,
+          categoryName,
+          externalLinks: product.externalLinks?.map((l) => ({ url: l.url, label: l.label })),
+        }}
       />
 
       <main className="min-h-screen bg-honeycomb-warm">
@@ -163,6 +182,21 @@ export default async function ProductPage({ params }: Args) {
             {/* Description */}
             <div className="basis-full lg:basis-1/2">
               <ProductDescription product={product} />
+              {/* Review Queue button */}
+              <div className="mt-4">
+                <AddToReviewQueueButton
+                  product={{
+                    id: product.id,
+                    slug: product.slug!,
+                    title: product.title,
+                    price: price ?? null,
+                    imageUrl: firstImage?.url ?? null,
+                    categoryName,
+                    externalLinks: product.externalLinks?.map((l) => ({ url: l.url, label: l.label })),
+                    addedAt: 0,
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

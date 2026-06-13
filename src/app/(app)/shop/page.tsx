@@ -5,6 +5,7 @@ import React from 'react'
 import { Package } from 'lucide-react'
 import type { Metadata } from 'next'
 import { ShopHeader } from '@/components/shop/ShopHeader'
+import { CategoryBar } from '@/components/CategoryBar'
 
 export const metadata: Metadata = {
   description:
@@ -67,7 +68,10 @@ export default async function ShopPage({ searchParams }: Props) {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Wigrix shop header — category pills + search + sort dropdown */}
+      {/* Category bar — shop page only */}
+      <CategoryBar />
+
+      {/* Wigrix shop header — search + sort dropdown */}
       <ShopHeader
         activeCategory={activeCategory}
         searchQuery={searchQuery}

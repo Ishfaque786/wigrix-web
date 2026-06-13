@@ -1,14 +1,20 @@
 'use client'
 import Link from 'next/link'
-import React, { Suspense, useState, useEffect } from 'react'
-import { Search, User, Menu, X, ArrowRight } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import React, { Suspense, useState, useEffect, useRef } from 'react'
+import { Search, User, Menu, X, ArrowRight, LayoutGrid, ChevronDown } from 'lucide-react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/utilities/cn'
 import { LogoIcon } from '@/components/icons/logo'
 import type { Header } from 'src/payload-types'
 
+type Category = {
+  title: string
+  slug: string
+}
+
 type Props = {
   header: Header
+  categories?: Category[]
 }
 
 const staticNavLinks = [
@@ -17,10 +23,14 @@ const staticNavLinks = [
   { name: 'About', href: '/about' },
 ]
 
-export function HeaderClient({ header }: Props) {
+function HeaderClientInner({ header, categories = [] }: Props) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [catOpen, setCatOpen] = useState(false)
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const activeCategory = searchParams.get('category') ?? ''
+  const catRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
@@ -31,7 +41,19 @@ export function HeaderClient({ header }: Props) {
   // close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false)
+    setCatOpen(false)
   }, [pathname])
+
+  // close category dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) {
+        setCatOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   const navLinks = staticNavLinks
 
@@ -75,6 +97,89 @@ export function HeaderClient({ header }: Props) {
                     </Link>
                   )
                 })}
+
+                {/* Categories dropdown button */}
+                {categories.length > 0 && (
+                  <div className="relative" ref={catRef}>
+                    <button
+                      onClick={() => setCatOpen((v) => !v)}
+                      className={cn(
+                        'flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ease-out',
+                        catOpen || activeCategory
+                          ? 'bg-white text-honeycomb-charcoal shadow-sm border border-honeycomb-cream/20'
+                          : 'text-honeycomb-medium hover:text-honeycomb-charcoal hover:bg-white/50',
+                      )}
+                      aria-expanded={catOpen}
+                      aria-haspopup="true"
+                    >
+                      <LayoutGrid
+                        className={cn(
+                          'w-3.5 h-3.5 transition-colors',
+                          activeCategory ? 'text-wigrix-teal' : '',
+                        )}
+                      />
+                      Categories
+                      <ChevronDown
+                        className={cn(
+                          'w-3.5 h-3.5 transition-transform duration-200',
+                          catOpen ? 'rotate-180' : '',
+                        )}
+                      />
+                    </button>
+
+                    {/* Dropdown panel */}
+                    {catOpen && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-neutral-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                        <div className="p-2">
+                          {/* All Products */}
+                          <Link
+                            href="/shop"
+                            onClick={() => setCatOpen(false)}
+                            className={cn(
+                              'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors',
+                              !activeCategory
+                                ? 'bg-wigrix-teal/10 text-wigrix-teal'
+                                : 'text-neutral-700 hover:bg-wigrix-teal/10 hover:text-wigrix-teal',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'w-2 h-2 rounded-full flex-shrink-0 transition-colors',
+                                !activeCategory ? 'bg-wigrix-teal' : 'bg-honeycomb-cream',
+                              )}
+                            />
+                            All Products
+                          </Link>
+                          <div className="my-1.5 border-t border-neutral-100" />
+                          {categories.map((cat) => {
+                            const isActive = activeCategory === cat.slug
+                            return (
+                              <Link
+                                key={cat.slug}
+                                href={`/shop?category=${cat.slug}`}
+                                onClick={() => setCatOpen(false)}
+                                className={cn(
+                                  'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                                  isActive
+                                    ? 'bg-wigrix-teal/10 text-wigrix-teal font-semibold'
+                                    : 'text-neutral-600 hover:bg-wigrix-teal/10 hover:text-wigrix-teal',
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    'w-2 h-2 rounded-full flex-shrink-0 transition-colors',
+                                    isActive ? 'bg-wigrix-teal' : 'bg-wigrix-teal/30',
+                                  )}
+                                />
+                                {cat.title}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -162,6 +267,35 @@ export function HeaderClient({ header }: Props) {
                     </Link>
                   )
                 })}
+
+                {/* Categories section in mobile */}
+                {categories.length > 0 && (
+                  <div className="py-4 border-b border-neutral-100">
+                    <p className="flex items-center gap-2 text-sm font-bold text-honeycomb-medium uppercase tracking-wider mb-3">
+                      <LayoutGrid className="w-4 h-4" />
+                      Categories
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href="/shop"
+                        onClick={() => setMobileOpen(false)}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700 hover:bg-wigrix-teal hover:text-white transition-colors"
+                      >
+                        All
+                      </Link>
+                      {categories.map((cat) => (
+                        <Link
+                          key={cat.slug}
+                          href={`/shop?category=${cat.slug}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700 hover:bg-wigrix-teal hover:text-white transition-colors"
+                        >
+                          {cat.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Account link */}
@@ -192,5 +326,13 @@ export function HeaderClient({ header }: Props) {
         </div>
       )}
     </>
+  )
+}
+
+export function HeaderClient(props: Props) {
+  return (
+    <Suspense fallback={null}>
+      <HeaderClientInner {...props} />
+    </Suspense>
   )
 }

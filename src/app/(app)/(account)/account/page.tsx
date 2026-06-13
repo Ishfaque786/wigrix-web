@@ -1,22 +1,19 @@
 import type { Metadata } from 'next'
 
-import { Button } from '@/components/ui/button'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import Link from 'next/link'
 import { headers as getHeaders } from 'next/headers.js'
 import configPromise from '@payload-config'
 import { AccountForm } from '@/components/forms/AccountForm'
-import { Order } from '@/payload-types'
-import { OrderItem } from '@/components/OrderItem'
 import { getPayload } from 'payload'
 import { redirect } from 'next/navigation'
+import { User, Eye, Star, Settings } from 'lucide-react'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
+import { ReviewQueue } from '@/components/ReviewQueue'
 
 export default async function AccountPage() {
   const headers = await getHeaders()
   const payload = await getPayload({ config: configPromise })
   const { user } = await payload.auth({ headers })
-
-  let orders: Order[] | null = null
 
   if (!user) {
     redirect(
@@ -24,72 +21,80 @@ export default async function AccountPage() {
     )
   }
 
-  try {
-    const ordersResult = await payload.find({
-      collection: 'orders',
-      limit: 5,
-      user,
-      overrideAccess: false,
-      pagination: false,
-      where: {
-        customer: {
-          equals: user?.id,
-        },
-      },
-    })
-
-    orders = ordersResult?.docs || []
-  } catch (error) {
-    // when deploying this template on Payload Cloud, this page needs to build before the APIs are live
-    // so swallow the error here and simply render the page with fallback data where necessary
-    // in production you may want to redirect to a 404  page or at least log the error somewhere
-    // console.error(error)
-  }
+  const displayName = user.name?.trim() || 'there'
 
   return (
     <>
-      <div className="border p-8 rounded-lg bg-primary-foreground">
-        <h1 className="text-3xl font-medium mb-8">Account settings</h1>
-        <AccountForm />
+      {/* Welcome card */}
+      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-wigrix-teal/10 flex items-center justify-center flex-shrink-0">
+            <User className="w-7 h-7 text-wigrix-teal" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-neutral-900">
+              Welcome back, {displayName}! 👋
+            </h2>
+            <p className="text-sm text-neutral-500 mt-0.5">
+              Signed in as{' '}
+              <span className="font-medium text-neutral-700">{user.email}</span>
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className=" border p-8 rounded-lg bg-primary-foreground">
-        <h2 className="text-3xl font-medium mb-8">Recent Orders</h2>
-
-        <div className="prose dark:prose-invert mb-8">
-          <p>
-            These are the most recent orders you have placed. Each order is associated with an
-            payment. As you place more orders, they will appear in your orders list.
-          </p>
+      {/* Recently Viewed section */}
+      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-wigrix-teal/10 flex items-center justify-center">
+            <Eye className="w-5 h-5 text-wigrix-teal" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900">Recently Viewed</h3>
+            <p className="text-xs text-neutral-400">Products you&apos;ve looked at recently</p>
+          </div>
         </div>
+        <RecentlyViewed />
+      </div>
 
-        {(!orders || !Array.isArray(orders) || orders?.length === 0) && (
-          <p className="mb-8">You have no orders.</p>
-        )}
+      {/* Review Queue section */}
+      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <Star className="w-5 h-5 text-amber-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900">Review Queue</h3>
+            <p className="text-xs text-neutral-400">
+              Products you want to review on Amazon or Flipkart
+            </p>
+          </div>
+        </div>
+        <ReviewQueue />
+      </div>
 
-        {orders && orders.length > 0 && (
-          <ul className="flex flex-col gap-6 mb-8">
-            {orders?.map((order, index) => (
-              <li key={order.id}>
-                <OrderItem order={order} />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <Button asChild variant="default">
-          <Link href="/orders">View all orders</Link>
-        </Button>
+      {/* Account Settings */}
+      <div className="bg-white rounded-3xl border-2 border-neutral-100 p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center">
+            <Settings className="w-5 h-5 text-neutral-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900">Account Settings</h3>
+            <p className="text-xs text-neutral-400">Update your name, email, and password</p>
+          </div>
+        </div>
+        <AccountForm />
       </div>
     </>
   )
 }
 
 export const metadata: Metadata = {
-  description: 'Create an account or log in to your existing account.',
+  description: 'Manage your Wigrix account, recently viewed products, and review queue.',
   openGraph: mergeOpenGraph({
-    title: 'Account',
+    title: 'My Account',
     url: '/account',
   }),
-  title: 'Account',
+  title: 'My Account',
 }

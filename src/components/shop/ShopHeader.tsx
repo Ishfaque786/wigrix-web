@@ -2,8 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState, Suspense } from 'react'
-import { Search, X, SlidersHorizontal, ChevronDown, ArrowUpDown } from 'lucide-react'
-import Link from 'next/link'
+import { Search, X, ArrowUpDown, ChevronDown } from 'lucide-react'
 import {
   Menubar,
   MenubarContent,
@@ -13,14 +12,6 @@ import {
   MenubarTrigger,
 } from '@/components/ui/menubar'
 
-// ── Categories ─────────────────────────────────────────────────────────────
-const categoryLinks = [
-  { name: 'All', slug: '' },
-  { name: 'Desk Organisers', slug: 'desk-organisers' },
-  { name: 'Gadget Stands', slug: 'gadget-stands' },
-  { name: 'Desk Planters', slug: 'desk-planters' },
-  { name: 'Accessories', slug: 'accessories' },
-]
 
 // ── Sort options ────────────────────────────────────────────────────────────
 const sortOptions = [
@@ -126,86 +117,54 @@ function ShopHeaderInner({ activeCategory, searchQuery, activeSort }: Props) {
           </p>
         </div>
 
-        {/* ── Unified Glass Control Bar ─────────────────────────────────── */}
-        <div className="bg-white/80 backdrop-blur-md border-t border-b border-x-0 md:border border-honeycomb-cream/40 rounded-none md:rounded-3xl px-6 py-3 md:p-4 shadow-xl shadow-honeycomb-charcoal/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          
-          {/* Categories / Filter Scroll Row */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-1 -mx-6 px-6 md:mx-0 md:px-0">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-honeycomb-muted uppercase tracking-wider mr-1 shrink-0">
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              Filter
-            </span>
-            {categoryLinks.map((cat) => {
-              const isActive = activeCategory === cat.slug
-              return (
-                <Link
-                  key={cat.slug || 'all'}
-                  href={categoryHref(cat.slug)}
-                  aria-pressed={isActive}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 border shrink-0 ${
-                    isActive
-                      ? 'bg-honeycomb-charcoal text-white border-honeycomb-charcoal shadow-sm'
-                      : 'bg-white border-honeycomb-cream/40 text-honeycomb-charcoal hover:bg-honeycomb-light hover:border-honeycomb-cream/80 hover:shadow-sm'
-                  }`}
-                >
-                  {cat.name}
-                </Link>
-              )
-            })}
-          </div>
+        {/* ── Search + Sort Control Bar ──────────────────────────────────── */}
+        <div className="bg-white/80 backdrop-blur-md border-t border-b border-x-0 md:border border-honeycomb-cream/40 rounded-none md:rounded-3xl px-6 py-3 md:p-4 shadow-xl shadow-honeycomb-charcoal/5 flex items-center justify-between gap-4">
+          {/* Search */}
+          <form onSubmit={handleSearch} className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-honeycomb-muted pointer-events-none" />
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Search products…"
+              className="w-full pl-10 pr-9 py-2 rounded-full border border-honeycomb-cream/60 bg-white text-sm text-honeycomb-charcoal placeholder:text-honeycomb-muted focus:outline-none focus:ring-2 focus:ring-honeycomb-charcoal/15 focus:border-honeycomb-charcoal/30 transition-all"
+            />
+            {inputValue && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-honeycomb-muted hover:text-honeycomb-charcoal transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </form>
 
-          {/* Divider on Mobile only */}
-          <div className="h-px bg-honeycomb-cream/15 md:hidden -mx-6" />
-
-          {/* Search + Sort Group */}
-          <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-            {/* Search */}
-            <form onSubmit={handleSearch} className="relative flex-1 md:w-64">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-honeycomb-muted pointer-events-none" />
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Search products…"
-                className="w-full pl-10 pr-9 py-2 rounded-full border border-honeycomb-cream/60 bg-white text-sm text-honeycomb-charcoal placeholder:text-honeycomb-muted focus:outline-none focus:ring-2 focus:ring-honeycomb-charcoal/15 focus:border-honeycomb-charcoal/30 transition-all"
-              />
-              {inputValue && (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-honeycomb-muted hover:text-honeycomb-charcoal transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </form>
-
-            {/* Sort Dropdown */}
-            <div className="shrink-0">
-              <Menubar className="border-none bg-transparent p-0 h-auto">
-                <MenubarMenu>
-                  <MenubarTrigger className="group flex items-center justify-center gap-1.5 p-2.5 sm:px-4 sm:py-2 rounded-full border border-honeycomb-cream/60 bg-white text-sm font-semibold text-honeycomb-charcoal hover:bg-honeycomb-light hover:border-honeycomb-cream/80 hover:shadow-sm focus:bg-honeycomb-light data-[state=open]:bg-honeycomb-light data-[state=open]:text-honeycomb-charcoal data-[state=open]:border-honeycomb-cream/80 transition-all duration-200 whitespace-nowrap cursor-pointer">
-                    <ArrowUpDown className="w-4 h-4 text-honeycomb-muted group-hover:text-honeycomb-charcoal group-data-[state=open]:text-honeycomb-charcoal transition-colors shrink-0" />
-                    <span className="hidden sm:inline">{activeSortLabel}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-honeycomb-muted transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0" />
-                  </MenubarTrigger>
-                  <MenubarContent align="end" className="w-48 bg-white rounded-2xl shadow-xl border border-honeycomb-cream/30 py-1">
-                    <MenubarRadioGroup value={activeSort} onValueChange={(val) => navigate({ sort: val })}>
-                      {sortOptions.map((opt) => (
-                        <MenubarRadioItem
-                          key={opt.value}
-                          value={opt.value}
-                          className="flex items-center pl-8 pr-4 py-2.5 text-sm text-honeycomb-medium hover:bg-honeycomb-light hover:cursor-pointer focus:bg-honeycomb-light data-[state=checked]:text-honeycomb-charcoal data-[state=checked]:font-semibold cursor-pointer"
-                        >
-                          {opt.label}
-                        </MenubarRadioItem>
-                      ))}
-                    </MenubarRadioGroup>
-                  </MenubarContent>
-                </MenubarMenu>
-              </Menubar>
-            </div>
+          {/* Sort Dropdown */}
+          <div className="shrink-0">
+            <Menubar className="border-none bg-transparent p-0 h-auto">
+              <MenubarMenu>
+                <MenubarTrigger className="group flex items-center justify-center gap-1.5 p-2.5 sm:px-4 sm:py-2 rounded-full border border-honeycomb-cream/60 bg-white text-sm font-semibold text-honeycomb-charcoal hover:bg-honeycomb-light hover:border-honeycomb-cream/80 hover:shadow-sm focus:bg-honeycomb-light data-[state=open]:bg-honeycomb-light data-[state=open]:text-honeycomb-charcoal data-[state=open]:border-honeycomb-cream/80 transition-all duration-200 whitespace-nowrap cursor-pointer">
+                  <ArrowUpDown className="w-4 h-4 text-honeycomb-muted group-hover:text-honeycomb-charcoal group-data-[state=open]:text-honeycomb-charcoal transition-colors shrink-0" />
+                  <span className="hidden sm:inline">{activeSortLabel}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-honeycomb-muted transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0" />
+                </MenubarTrigger>
+                <MenubarContent align="end" className="w-48 bg-white rounded-2xl shadow-xl border border-honeycomb-cream/30 py-1">
+                  <MenubarRadioGroup value={activeSort} onValueChange={(val) => navigate({ sort: val })}>
+                    {sortOptions.map((opt) => (
+                      <MenubarRadioItem
+                        key={opt.value}
+                        value={opt.value}
+                        className="flex items-center pl-8 pr-4 py-2.5 text-sm text-honeycomb-medium hover:bg-honeycomb-light hover:cursor-pointer focus:bg-honeycomb-light data-[state=checked]:text-honeycomb-charcoal data-[state=checked]:font-semibold cursor-pointer"
+                      >
+                        {opt.label}
+                      </MenubarRadioItem>
+                    ))}
+                  </MenubarRadioGroup>
+                </MenubarContent>
+              </MenubarMenu>
+            </Menubar>
           </div>
         </div>
       </div>
