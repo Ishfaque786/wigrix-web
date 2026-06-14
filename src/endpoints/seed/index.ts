@@ -220,7 +220,7 @@ export const seed = async ({
   }
 
   try {
-    payload.logger.info(`— Clearing globals...`)
+    payload.logger.info(`— Clearing/resetting globals...`)
     await Promise.all(
       globals.map((global) =>
         payload.updateGlobal({
@@ -236,15 +236,7 @@ export const seed = async ({
       ),
     )
 
-    payload.logger.info(`— Clearing products, categories, and media collections...`)
-    for (const collection of collections) {
-      await payload.db.deleteMany({ collection, req, where: {} })
-      if (payload.collections[collection].config.versions) {
-        await payload.db.deleteVersions({ collection, req, where: {} })
-      }
-    }
-
-    payload.logger.info(`— Uploading product media files...`)
+    payload.logger.info(`— Uploading or updating product media files...`)
     const mediaMap: Record<string, string | number> = {}
     
     // Extract all unique image filenames to upload
@@ -264,27 +256,70 @@ export const seed = async ({
           ext === '.png' ? 'image/png' : 
           'image/jpeg'
 
-        const media = await payload.create({
+        const alt = filename.replace(ext, '').replace(/[-_]/g, ' ')
+
+        // Check if media already exists (by filename or alt)
+        const existingMedia = await payload.find({
           collection: 'media',
+          where: {
+            or: [
+              {
+                filename: {
+                  equals: filename,
+                },
+              },
+              {
+                alt: {
+                  equals: alt,
+                },
+              },
+            ],
+          },
+          limit: 1,
           req,
-          data: {
-            alt: filename.replace(ext, '').replace(/[-_]/g, ' '),
-          },
-          file: {
-            name: filename,
-            data: fileBuffer,
-            mimetype,
-            size: stats.size,
-          },
         })
-        mediaMap[filename] = media.id
-        payload.logger.info(`Uploaded ${filename} as media ID ${media.id}`)
+
+        if (existingMedia.docs && existingMedia.docs.length > 0) {
+          const docId = existingMedia.docs[0].id
+          const media = await payload.update({
+            collection: 'media',
+            id: docId,
+            req,
+            data: {
+              alt,
+            },
+            file: {
+              name: filename,
+              data: fileBuffer,
+              mimetype,
+              size: stats.size,
+            },
+          })
+          mediaMap[filename] = media.id
+          payload.logger.info(`Updated existing media ${filename} as ID ${media.id}`)
+        } else {
+          const media = await payload.create({
+            collection: 'media',
+            req,
+            data: {
+              alt,
+            },
+            file: {
+              name: filename,
+              data: fileBuffer,
+              mimetype,
+              size: stats.size,
+            },
+          })
+          mediaMap[filename] = media.id
+          payload.logger.info(`Uploaded new media ${filename} as ID ${media.id}`)
+        }
       } else {
         payload.logger.error(`Local image file not found: ${filePath}`)
       }
     }
 
-    payload.logger.info(`— Creating categories...`)
+    payload.logger.info(`— Creating or updating categories...`)
     const categoryMap: Record<string, string | number> = {}
     const uniqueCategories = Array.from(
       new Set(
@@ -308,19 +343,44 @@ export const seed = async ({
     }
 
     for (const cat of allCatsToCreate) {
-      const createdCat = await payload.create({
+      const existingCat = await payload.find({
         collection: 'categories',
-        req,
-        data: {
-          title: cat.name,
-          slug: cat.slug,
+        where: {
+          slug: {
+            equals: cat.slug,
+          },
         },
+        limit: 1,
+        req,
       })
-      categoryMap[cat.slug] = createdCat.id
-      payload.logger.info(`Created category ${cat.name} with ID ${createdCat.id}`)
+
+      if (existingCat.docs && existingCat.docs.length > 0) {
+        const docId = existingCat.docs[0].id
+        const updatedCat = await payload.update({
+          collection: 'categories',
+          id: docId,
+          req,
+          data: {
+            title: cat.name,
+          },
+        })
+        categoryMap[cat.slug] = updatedCat.id
+        payload.logger.info(`Updated existing category ${cat.name} (ID: ${updatedCat.id})`)
+      } else {
+        const createdCat = await payload.create({
+          collection: 'categories',
+          req,
+          data: {
+            title: cat.name,
+            slug: cat.slug,
+          },
+        })
+        categoryMap[cat.slug] = createdCat.id
+        payload.logger.info(`Created category ${cat.name} with ID ${createdCat.id}`)
+      }
     }
 
-    payload.logger.info(`— Creating products...`)
+    payload.logger.info(`— Creating or updating products...`)
     for (const prod of productSeedData) {
       const gallery = prod.imageFiles
         .map((filename) => {
@@ -343,27 +403,52 @@ export const seed = async ({
         },
       ]
 
-      await payload.create({
-        collection: 'products',
-        req,
-        data: {
-          title: prod.name,
-          slug: prod.handle,
-          description: createRichText(prod.description),
-          priceInINR: prod.priceInINR,
-          priceInINREnabled: true,
-          externalLinks,
-          categories: catId ? [catId as any] : [],
-          gallery,
-          meta: {
-            title: `${prod.name} | Wigrix`,
-            description: prod.description,
-            image: mainMediaId || undefined,
-          },
-          _status: 'published',
+      const productData = {
+        title: prod.name,
+        slug: prod.handle,
+        description: createRichText(prod.description),
+        priceInINR: prod.priceInINR,
+        priceInINREnabled: true,
+        externalLinks,
+        categories: catId ? [catId as any] : [],
+        gallery,
+        meta: {
+          title: `${prod.name} | Wigrix`,
+          description: prod.description,
+          image: mainMediaId || undefined,
         },
+        _status: 'published' as const,
+      }
+
+      // Check if product already exists
+      const existingProd = await payload.find({
+        collection: 'products',
+        where: {
+          slug: {
+            equals: prod.handle,
+          },
+        },
+        limit: 1,
+        req,
       })
-      payload.logger.info(`Created product ${prod.name}`)
+
+      if (existingProd.docs && existingProd.docs.length > 0) {
+        const docId = existingProd.docs[0].id
+        await payload.update({
+          collection: 'products',
+          id: docId,
+          req,
+          data: productData,
+        })
+        payload.logger.info(`Updated existing product ${prod.name} (ID: ${docId})`)
+      } else {
+        await payload.create({
+          collection: 'products',
+          req,
+          data: productData,
+        })
+        payload.logger.info(`Created product ${prod.name}`)
+      }
     }
 
     payload.logger.info(`— Updating header & footer globals...`)
